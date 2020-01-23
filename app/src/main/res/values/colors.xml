@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#000000</color>
+    <color name="colorPrimaryDark">#000000</color>
+    <color name="colorAccent">#0973ba</color>
+
+
+    <color name="translucent_glass">#95363636</color>
+    <color name="translucent_glass_white">#95FFFFFF</color>
+    <color name="transparent">#00000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="grey">#ECECEC</color>
+
+    <color name="black_overlay">#66000000</color>
+</resources>
