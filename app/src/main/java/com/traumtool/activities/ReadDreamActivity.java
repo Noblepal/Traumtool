@@ -110,7 +110,7 @@ public class ReadDreamActivity extends AppCompatActivity {
     private void downloadPDF() {
         showView(downloadProgress);
         String url = "data/" + dream.getCategory() + "/" + dream.getFileName();
-        ApiService service = AppUtils.getApiDownloadService();
+        ApiService service = AppUtils.getApiService();
         service.downloadFile(url).
                 enqueue(new Callback<ResponseBody>() {
                     @SuppressLint("StaticFieldLeak")

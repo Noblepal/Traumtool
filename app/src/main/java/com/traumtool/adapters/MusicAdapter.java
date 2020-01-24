@@ -1,6 +1,7 @@
 package com.traumtool.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,7 @@ import com.traumtool.R;
 import com.traumtool.models.Music;
 import com.traumtool.utils.AppUtils;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHolder> {
@@ -44,6 +46,10 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
         Music currentMusic = musicArrayList.get(position);
 
         holder.name.setText(AppUtils.removeFileExtensionFromString(currentMusic.getFilename()));
+        holder.size.setText("0");
+        if (isAvailableOffline(currentMusic)) {
+            AppUtils.showView(holder.offlineChecked);
+        }
 
         Glide.with(holder.image)
                 .load(currentMusic.getFileUrl())
@@ -56,6 +62,13 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
 
     }
 
+    private boolean isAvailableOffline(Music file) {
+        File path = context.getExternalFilesDir("Download/" + file.getCategory() + "/");
+        File mFile = new File(path, file.getFilename());
+        Log.d(TAG, "isAvailableOffline: Called " + mFile.getAbsolutePath());
+        return mFile.exists();
+    }
+
     @Override
     public int getItemCount() {
         return musicArrayList.size();
@@ -63,15 +76,17 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
 
     class MusicViewHolder extends RecyclerView.ViewHolder {
 
-        ImageView image;
-        TextView name, duration;
+        ImageView image, offlineChecked;
+        TextView name, duration, size;
         ImageButton play;
         MaterialCardView cardView;
 
         MusicViewHolder(@NonNull View itemView) {
             super(itemView);
             image = itemView.findViewById(R.id.imgMusicFromList);
+            offlineChecked = itemView.findViewById(R.id.img_offline_check);
             name = itemView.findViewById(R.id.tvNameFromList);
+            size = itemView.findViewById(R.id.tv_file_size);
             duration = itemView.findViewById(R.id.tvListMusicTimeFromList);
             play = itemView.findViewById(R.id.img_play_from_list);
             cardView = itemView.findViewById(R.id.materialCardView);

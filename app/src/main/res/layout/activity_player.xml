@@ -70,10 +70,9 @@
         android:id="@+id/ll_audio_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginLeft="16dp"
         android:elevation="2dp"
         android:orientation="vertical"
+        android:padding="4dp"
         app:layout_constraintBottom_toTopOf="@+id/materialCardView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/playerToolBar">
@@ -104,7 +103,7 @@
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/materialCardView"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="128dp"
         android:layout_marginLeft="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginRight="16dp"
@@ -147,12 +146,13 @@
                         android:ellipsize="marquee"
                         android:fadingEdge="horizontal"
                         android:fontFamily="@font/product_sans_bold"
+                        android:hint="No audio Selected"
                         android:marqueeRepeatLimit="marquee_forever"
                         android:scrollHorizontally="true"
                         android:singleLine="true"
                         android:textColor="@color/black"
-                        android:textSize="22sp"
-                        tools:text="Piano" />
+                        android:textColorHint="@color/greyDark"
+                        android:textSize="22sp" />
 
                     <TextView
                         android:id="@+id/tvRealTime"
@@ -177,6 +177,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal">
 
                     <ProgressBar
@@ -197,11 +198,11 @@
 
                     <ImageButton
                         android:id="@+id/img_play_pause"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:layout_margin="2dp"
                         android:background="@color/transparent"
-                        android:src="@drawable/ic_play" />
+                        android:src="@drawable/ic_play_main" />
 
                     <ImageButton
                         android:id="@+id/img_forward"

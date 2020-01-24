@@ -12,41 +12,20 @@ public class RetrofitClient {
 
     public static Retrofit getClient(String base_url) {
         if (retrofit == null) {
-
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
             logging.setLevel(HttpLoggingInterceptor.Level.BODY);
 
             final OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                    .readTimeout(300, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
                     .addInterceptor(logging)
-                    .connectTimeout(300, TimeUnit.SECONDS)
                     .build();
 
             retrofit = new Retrofit.Builder()
                     .baseUrl(base_url)
                     .client(okHttpClient)
                     .addConverterFactory(GsonConverterFactory.create())
-                    .build();
-        }
-
-        return retrofit;
-    }
-
-    public static Retrofit getClientDownload(String base_url) {
-        if (retrofit == null) {
-
-            HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-            logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-
-            final OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                    .readTimeout(300, TimeUnit.SECONDS)
-                    .addInterceptor(logging)
-                    .connectTimeout(300, TimeUnit.SECONDS)
-                    .build();
-
-            retrofit = new Retrofit.Builder()
-                    .baseUrl(base_url)
-                    .client(okHttpClient)
                     .build();
         }
 

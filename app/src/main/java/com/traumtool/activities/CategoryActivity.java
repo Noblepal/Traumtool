@@ -2,23 +2,26 @@ package com.traumtool.activities;
 
 import android.os.Bundle;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.view.animation.AnimationUtils;
-import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.traumtool.R;
 import com.traumtool.adapters.CategoryAdapter;
+import com.traumtool.interfaces.NetworkModeChangeListener;
 import com.traumtool.libs.GridRecyclerView;
 import com.traumtool.utils.SharedPrefsManager;
 
-public class CategoryActivity extends AppCompatActivity {
+public class CategoryActivity extends AppCompatActivity implements NetworkModeChangeListener {
 
     Switch mSwitch;
+    String TAG = "Category activity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,17 +48,29 @@ public class CategoryActivity extends AppCompatActivity {
         linkText.setMovementMethod(LinkMovementMethod.getInstance());
 
         mSwitch = findViewById(R.id.switch_online_offline);
-        mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                SharedPrefsManager.getInstance(CategoryActivity.this).setOfflineMode(isChecked);
-                if (isChecked) {
-                    Toast.makeText(CategoryActivity.this, "Online", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(CategoryActivity.this, "Offline", Toast.LENGTH_SHORT).show();
-                }
+        mSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            Log.d(TAG, "onCheckedChanged: " + isChecked);
+            if (isChecked) {
+                SharedPrefsManager.getInstance(CategoryActivity.this).setOfflineMode(false);
+                showCustomSnackBar("Online mode set", false, null, 0);
+            } else {
+                SharedPrefsManager.getInstance(CategoryActivity.this).setOfflineMode(true);
+                showCustomSnackBar("Offline mode set", false, null, 0);
             }
         });
 
+    }
+
+    private void showCustomSnackBar(String message, boolean hasAction, @Nullable String actionText, int LENGTH) {
+        Snackbar snackbar = Snackbar.make(mSwitch, message, LENGTH);
+        if (hasAction) {
+            Log.d(TAG, "showCustomSnackBar: Has Action");
+        }
+        snackbar.show();
+    }
+
+    @Override
+    public boolean isOfflineEnabled(boolean isOffline) {
+        return isOffline;
     }
 }

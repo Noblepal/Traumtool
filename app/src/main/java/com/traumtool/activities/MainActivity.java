@@ -34,7 +34,6 @@ public class MainActivity extends AppCompatActivity {
         startApp = findViewById(R.id.tv_start_app);
 
         rl_main.setOnClickListener(v -> {
-            //noinspection unchecked
             ActivityOptionsCompat options = ActivityOptionsCompat
                     .makeSceneTransitionAnimation(this,
                             new Pair<>(logo, ViewCompat.getTransitionName(logo)));

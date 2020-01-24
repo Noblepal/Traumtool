@@ -15,9 +15,9 @@ public class AppUtils {
         return RetrofitClient.getClient(BASE_URL).create(ApiService.class);
     }
 
-    public static ApiService getApiDownloadService() {
+    /*public static ApiService getApisDownloadService() {
         return RetrofitClient.getClientDownload(BASE_URL).create(ApiService.class);
-    }
+    }*/
 
     public static String formatStringToTime(int raw) {
         return String.format(US, "%02d:%02d", TimeUnit.MILLISECONDS.toMinutes(raw),
@@ -33,12 +33,19 @@ public class AppUtils {
     }
 
     public static void showView(View v) {
-        v.setVisibility(View.GONE);
+        v.setVisibility(View.VISIBLE);
     }
 
     public static void hideView(View v) {
         v.setVisibility(View.GONE);
     }
 
+    public static double bytesToMbytes(long l) {
+        return l / 1024.0 / 1024.0;
+    }
+
+    public static double roundUp2DecimalPlaces(long x) {
+        return Math.round(x * 100.0) / 100.0;
+    }
 
 }

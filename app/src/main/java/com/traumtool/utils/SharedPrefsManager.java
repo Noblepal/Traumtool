@@ -24,7 +24,7 @@ public class SharedPrefsManager {
         sharedPreferences.edit().putBoolean("isOffline", offline).commit();
     }
 
-    public boolean isOffline() {
+    public boolean getIsOffline() {
         return sharedPreferences.getBoolean("isOffline", false);
     }
 }

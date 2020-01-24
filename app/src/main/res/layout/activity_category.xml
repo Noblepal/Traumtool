@@ -41,15 +41,27 @@
                 android:transitionName="logo" />
 
 
+            <TextView
+                android:id="@+id/tv_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="6dp"
+                android:layout_toStartOf="@+id/switch_online_offline"
+                android:fontFamily="@font/product_sans_regular"
+                android:textColorHint="@color/colorAccent"
+                android:textSize="13sp"
+                tools:text="Offline" />
+
             <Switch
                 android:id="@+id/switch_online_offline"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:textColor="@color/black"
                 android:layout_centerVertical="true"
-                android:textOff="Offline"
-                android:textOn="Online" />
+                android:textColor="@color/black"
+                android:textOff="@string/offline"
+                android:textOn="@string/online" />
 
         </RelativeLayout>
 

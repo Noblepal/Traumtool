@@ -20,17 +20,20 @@ public class Music implements Serializable {
     @SerializedName("duration")
     @Expose
     private int duration;
-
     @SerializedName("file_url")
     @Expose
     private String fileUrl;
+    @SerializedName("file_size")
+    @Expose
+    private long fileSize;
 
-    public Music(Integer id, String filename, String category, int duration, String fileUrl) {
+    public Music(Integer id, String filename, String category, int duration, String fileUrl, long fileSize) {
         this.id = id;
         this.filename = filename;
         this.category = category;
         this.duration = duration;
         this.fileUrl = fileUrl;
+        this.fileSize = fileSize;
     }
 
     public Integer getId() {
@@ -49,14 +52,6 @@ public class Music implements Serializable {
         this.filename = filename;
     }
 
-    public int getDuration() {
-        return duration;
-    }
-
-    public void setDuration(int duration) {
-        this.duration = duration;
-    }
-
     public String getCategory() {
         return category;
     }
@@ -65,12 +60,28 @@ public class Music implements Serializable {
         this.category = category;
     }
 
+    public int getDuration() {
+        return duration;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
     public String getFileUrl() {
         return fileUrl;
     }
 
     public void setFileUrl(String fileUrl) {
         this.fileUrl = fileUrl;
+    }
+
+    public long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(long fileSize) {
+        this.fileSize = fileSize;
     }
 
     @NonNull
