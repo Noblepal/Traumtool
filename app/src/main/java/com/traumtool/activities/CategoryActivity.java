@@ -1,9 +1,12 @@
 package com.traumtool.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.view.View;
 import android.view.animation.AnimationUtils;
+import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -21,6 +24,7 @@ import com.traumtool.utils.SharedPrefsManager;
 public class CategoryActivity extends AppCompatActivity implements NetworkModeChangeListener {
 
     Switch mSwitch;
+    ImageButton imgBack;
     String TAG = "Category activity";
 
     @Override
@@ -34,7 +38,11 @@ public class CategoryActivity extends AppCompatActivity implements NetworkModeCh
     private void initializeData() {
         //Set switch to previously selected mode
         mSwitch = findViewById(R.id.switch_online_offline);
-        mSwitch.setChecked(SharedPrefsManager.getInstance(this).getIsOffline());
+        imgBack = findViewById(R.id.imgBack);
+        mSwitch.setChecked(true);
+        if (SharedPrefsManager.getInstance(this).getIsOffline()){
+            mSwitch.setChecked(false);
+        }
         String[] categories = {"Relaxation", "Dream Trips", "Meditation", "Self-reflection", "Muscle Relaxation"};
         int[] images = {R.drawable.relaxation,
                 R.drawable.dream_trip, R.drawable.meditation,
@@ -50,6 +58,7 @@ public class CategoryActivity extends AppCompatActivity implements NetworkModeCh
         TextView linkText = findViewById(R.id.tvLink);
         linkText.setMovementMethod(LinkMovementMethod.getInstance());
 
+
         mSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             Log.d(TAG, "onCheckedChanged: " + isChecked);
             if (isChecked) {
@@ -58,6 +67,13 @@ public class CategoryActivity extends AppCompatActivity implements NetworkModeCh
             } else {
                 SharedPrefsManager.getInstance(CategoryActivity.this).toggleOfflineMode(true);
                 showCustomSnackBar("Offline mode set", false, null, 0);
+            }
+        });
+        imgBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(CategoryActivity.this, MainActivity.class));
+                finish();
             }
         });
 

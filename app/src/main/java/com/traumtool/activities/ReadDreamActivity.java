@@ -14,9 +14,9 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.github.barteksc.pdfviewer.PDFView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.pdfview.PDFView;
 import com.traumtool.R;
 import com.traumtool.interfaces.ApiService;
 import com.traumtool.models.Dream;
@@ -133,8 +133,10 @@ public class ReadDreamActivity extends AppCompatActivity {
                             @Override
                             protected void onPostExecute(Void aVoid) {
                                 hideView(downloadProgress);
-                                if (isDownloaded)
-                                    showCustomSnackBar("Download Complete", false, null);
+                                if (isDownloaded){
+
+//                                    showCustomSnackBar("Download Complete", false, null);
+                                }
                                 else {
                                     showCustomSnackBar("Something went wrong", true, "Try Again");
                                 }
@@ -289,23 +291,27 @@ public class ReadDreamActivity extends AppCompatActivity {
     public int getPageCount() {
         return pdfRenderer.getPageCount();
     }
-
-    private void renderPDF(File file) {
-        imageViewPdf.fromFile(file)
-                .pages(0, 2, 1, 3, 3, 3) // all pages are displayed by default
-                .enableSwipe(true) // allows to block changing pages using swipe
-                .swipeHorizontal(false)
-                .enableDoubletap(true)
-                .defaultPage(0)
-                .enableAnnotationRendering(false) // render annotations (such as comments, colors or forms)
-                .password(null)
-                .scrollHandle(null)
-                .enableAntialiasing(true) // improve rendering a little bit on low-res screens
-                .spacing(0)
-                .load();
-
+    private void renderPDF(File file){
+        imageViewPdf.fromFile(file).show();
         hideView(renderProgressBar);
     }
+
+//    private void renderPDF(File file) {
+//        imageViewPdf.fromFile(file)
+//                .pages(0, 2, 1, 3, 3, 3) // all pages are displayed by default
+//                .enableSwipe(true) // allows to block changing pages using swipe
+//                .swipeHorizontal(false)
+//                .enableDoubletap(true)
+//                .defaultPage(0)
+//                .enableAnnotationRendering(false) // render annotations (such as comments, colors or forms)
+//                .password(null)
+//                .scrollHandle(null)
+//                .enableAntialiasing(true) // improve rendering a little bit on low-res screens
+//                .spacing(0)
+//                .load();
+//
+//        hideView(renderProgressBar);
+//    }
 
     private void showCustomSnackBar(String message, boolean hasAction, @Nullable String actionText) {
         Snackbar snackbar = Snackbar.make(imageViewPdf, message, Snackbar.LENGTH_LONG);

@@ -12,8 +12,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
+//import com.bumptech.glide.Glide;
+//import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.card.MaterialCardView;
 import com.traumtool.R;
 import com.traumtool.activities.ReadDreamActivity;
@@ -50,12 +50,12 @@ public class DreamAdapter extends RecyclerView.Adapter<DreamAdapter.MusicViewHol
         holder.author.setText(currentDream.getAuthor());
         holder.words.setText(currentDream.getWords() + " words");
 
-        Glide.with(holder.image)
-                .load(currentDream.getFileUrl())
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .placeholder(R.drawable.ic_image)
-                .fallback(R.drawable.ic_image)
-                .into(holder.image);
+//        Glide.with(holder.image)
+//                .load(currentDream.getFileUrl())
+//                .diskCacheStrategy(DiskCacheStrategy.ALL)
+//                .placeholder(R.drawable.ic_image)
+//                .fallback(R.drawable.ic_image)
+//                .into(holder.image);
 
         holder.cardView.setOnClickListener(v -> {
             Intent intent = new Intent(context, ReadDreamActivity.class);

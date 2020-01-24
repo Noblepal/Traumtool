@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -15,17 +16,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.snackbar.Snackbar;
 import com.traumtool.R;
 import com.traumtool.interfaces.ApiService;
+import com.traumtool.models.Music;
 import com.traumtool.models.Question;
 import com.traumtool.models.QuestionFileResponse;
 import com.traumtool.utils.AppUtils;
 import com.traumtool.utils.SharedPrefsManager;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Random;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -46,6 +51,8 @@ public class SelfReflectionActivity extends AppCompatActivity {
     String category;
     Question question;
     File questionFile;
+    int lastid;
+    String read_files=" ";
     boolean isDownloaded = false, isOfflineFromPrefs = false;
 
     @Override
@@ -66,15 +73,21 @@ public class SelfReflectionActivity extends AppCompatActivity {
         //Get online/offline boolean from shared preferences
         isOfflineFromPrefs = SharedPrefsManager.getInstance(this).getIsOffline();
 
-        retrieveQuestionList();
-        /*
+//        retrieveQuestionList();
+
         if (isOfflineFromPrefs) {
             //Retrieve locally downloaded files
             getFiles();
         } else {
             //Retrieve files from server
             retrieveQuestionList();
-        }*/
+        }
+        buttonNextQuestion.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                displayNextQuestion(getNextFile());
+            }
+        });
 
     }
 
@@ -82,7 +95,26 @@ public class SelfReflectionActivity extends AppCompatActivity {
      * Display next random question from text files
      */
     private void displayNextQuestion(File question) {
+        if (question==null){
+            tvQuestion.setText("");
+            return;
+        }
         Log.d(TAG, "displayNextQuestion: " + question.getName());
+        StringBuilder text = new StringBuilder();
+        try {
+            question= new File(question.getPath());
+            BufferedReader br = new BufferedReader(new FileReader(question));
+            String line;
+            while ((line = br.readLine()) != null) {
+                text.append(line);
+                text.append('\n');
+            }
+            br.close() ;
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+        Log.d(TAG, "displayNextQuestion: " + text.toString());
+        tvQuestion.setText(text.toString());
     }
 
     private void getFiles() {
@@ -98,10 +130,10 @@ public class SelfReflectionActivity extends AppCompatActivity {
                 return;
             }
             Question question = new Question(
-                    "",
+                    uri+"/"+f.getName(),
                     id++,
-                    "",
-                    ""
+                    f.getName(),
+                    category
             );
 
             if (question.getFilename().isEmpty() || question.getFilename() == null) {
@@ -110,6 +142,50 @@ public class SelfReflectionActivity extends AppCompatActivity {
                 offlineFiles.add(question);
             }
         }
+        lastid=id;
+        displayNextQuestion(getNextFile());
+    }
+
+    private File getNextFile(){
+        File path = SelfReflectionActivity.this.getExternalFilesDir("Download/" + category);
+        String uri = String.valueOf(path);
+        File file=null;
+        Random r = new Random();
+
+        int i1 = r.nextInt((lastid)- 1) ;
+        String[] miami=read_files.trim().split(" ");
+        int miami1=1;
+        while (read_files.contains(Integer.toString(i1)) && miami.length!=miami1){
+            r = new Random();
+            i1 = r.nextInt((lastid )- 1);
+            miami1++;
+        }
+        Log.e(TAG, "getNextFile: rand no : "+i1);
+        read_files=read_files+" "+ i1;
+        int cc=0,ff=0;
+        for (Question s:offlineFiles){
+            if (s.getId()==i1){
+                uri=s.getFileUrl();
+                Log.e(TAG, "getNextFile: URI: "+uri);
+                file= new File(uri);
+            }else {
+                Log.e(TAG, "getNextFile: not me: "+uri );
+                cc++;
+            }
+            ff++;
+        }
+
+        return file;
+
+    }
+
+    private boolean isAvailableOffline(Question file) {
+        File path = SelfReflectionActivity.this.getExternalFilesDir("Download/" + file.getCategory() + "/");
+        File mFile = new File(path, file.getFilename());
+//        if (mFile.exists())
+//            file.setFileUrl(String.valueOf(mFile));
+        Log.d(TAG, "isAvailableOffline: Offline file found: " + mFile);
+        return mFile.exists();
     }
 
     private void retrieveQuestionList() {
@@ -126,8 +202,13 @@ public class SelfReflectionActivity extends AppCompatActivity {
                     questionArrayList.addAll(response.body().getQuestions());
                     Log.d(TAG, "onResponse: SIZE:: " + questionArrayList.size());
                     for (int C = 0; C < questionArrayList.size(); C++) {
-                        downloadQuestion(questionArrayList.get(C));
+                        if (isAvailableOffline(questionArrayList.get(C))){
+
+                        }else {
+                            downloadQuestion(questionArrayList.get(C));
+                        }
                     }
+                    getFiles();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -174,11 +255,11 @@ public class SelfReflectionActivity extends AppCompatActivity {
                                     Log.d(TAG, "onPostExecute: Error: line 170");
                                 }
 
-                                try {
-                                    displayNextQuestion(questionFile);
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
+//                                try {
+//                                    displayNextQuestion(questionFile);
+//                                } catch (Exception e) {
+//                                    e.printStackTrace();
+//                                }
                             }
                         }.execute();
                     }

@@ -476,6 +476,8 @@ public class PlayerActivity extends AppCompatActivity implements
             streamTask.cancel(true);
             mediaPlayer.stop();
         }
+        Log.e(TAG, "onDestroy: ");
+        PlayerActivity.this.finish();
     }
 
     private void downloadAudio(Music audio) {
