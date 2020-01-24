@@ -41,11 +41,11 @@ public class AppUtils {
     }
 
     public static double bytesToMbytes(long l) {
-        return l / 1024.0 / 1024.0;
+        return roundUp2DecimalPlaces((long) (l / 1024.0 / 1024.0));
     }
 
-    public static double roundUp2DecimalPlaces(long x) {
-        return Math.round(x * 100.0) / 100.0;
+    public static long roundUp2DecimalPlaces(long x) {
+        return (long) (Math.round(x * 100.0) / 100.0);
     }
 
 }

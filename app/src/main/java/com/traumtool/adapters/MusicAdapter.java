@@ -46,9 +46,10 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
         Music currentMusic = musicArrayList.get(position);
 
         holder.name.setText(AppUtils.removeFileExtensionFromString(currentMusic.getFilename()));
-        holder.size.setText("0");
+        holder.size.setText(String.format("%sMB", AppUtils.bytesToMbytes(currentMusic.getFileSize())));
         if (isAvailableOffline(currentMusic)) {
             AppUtils.showView(holder.offlineChecked);
+            AppUtils.hideView(holder.size);
         }
 
         Glide.with(holder.image)

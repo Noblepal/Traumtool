@@ -17,7 +17,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning,UnusedAttribute">
-        <activity android:name=".activities.SelfReflection" />
+        <activity android:name=".activities.SelfReflectionActivity" />
         <activity android:name=".activities.ReadDreamActivity" />
         <activity android:name=".activities.DreamActivity" />
         <activity android:name=".activities.PlayerActivity" />

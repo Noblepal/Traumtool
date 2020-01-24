@@ -3,6 +3,7 @@ package com.traumtool.interfaces;
 
 import com.traumtool.models.DreamFileResponse;
 import com.traumtool.models.FileResponse;
+import com.traumtool.models.QuestionFileResponse;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -19,6 +20,11 @@ public interface ApiService {
 
     @GET("data/")
     Call<DreamFileResponse> getDreamFileList(
+            @Query("category") String category
+    );
+
+    @GET("data/")
+    Call<QuestionFileResponse> getQuestionFileList(
             @Query("category") String category
     );
 

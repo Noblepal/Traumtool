@@ -16,7 +16,7 @@ import com.google.android.material.card.MaterialCardView;
 import com.traumtool.R;
 import com.traumtool.activities.DreamActivity;
 import com.traumtool.activities.PlayerActivity;
-import com.traumtool.activities.SelfReflection;
+import com.traumtool.activities.SelfReflectionActivity;
 
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> {
 
@@ -49,7 +49,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
                 intent.putExtra("category", "dreamtravel");
             } else if (categories[position].toLowerCase().contains("reflection")) {
                 intent.putExtra("category", "self_reflection");
-                intent.setClass(context, SelfReflection.class);
+                intent.setClass(context, SelfReflectionActivity.class);
             } else if (categories[position].toLowerCase().contains("meditation")) {
                 intent.putExtra("category", "meditation");
                 intent.setClass(context, PlayerActivity.class);

@@ -32,6 +32,9 @@ public class CategoryActivity extends AppCompatActivity implements NetworkModeCh
     }
 
     private void initializeData() {
+        //Set switch to previously selected mode
+        mSwitch = findViewById(R.id.switch_online_offline);
+        mSwitch.setChecked(SharedPrefsManager.getInstance(this).getIsOffline());
         String[] categories = {"Relaxation", "Dream Trips", "Meditation", "Self-reflection", "Muscle Relaxation"};
         int[] images = {R.drawable.relaxation,
                 R.drawable.dream_trip, R.drawable.meditation,
@@ -47,14 +50,13 @@ public class CategoryActivity extends AppCompatActivity implements NetworkModeCh
         TextView linkText = findViewById(R.id.tvLink);
         linkText.setMovementMethod(LinkMovementMethod.getInstance());
 
-        mSwitch = findViewById(R.id.switch_online_offline);
         mSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             Log.d(TAG, "onCheckedChanged: " + isChecked);
             if (isChecked) {
-                SharedPrefsManager.getInstance(CategoryActivity.this).setOfflineMode(false);
+                SharedPrefsManager.getInstance(CategoryActivity.this).toggleOfflineMode(false);
                 showCustomSnackBar("Online mode set", false, null, 0);
             } else {
-                SharedPrefsManager.getInstance(CategoryActivity.this).setOfflineMode(true);
+                SharedPrefsManager.getInstance(CategoryActivity.this).toggleOfflineMode(true);
                 showCustomSnackBar("Offline mode set", false, null, 0);
             }
         });

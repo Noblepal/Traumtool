@@ -56,6 +56,7 @@ public class PlayerActivity extends AppCompatActivity implements
 
     private ArrayList<Music> musicArrayList = new ArrayList<>();
     private ArrayList<Music> offlineFiles = new ArrayList<>();
+    private MusicAdapter musicAdapter;
     private static final String TAG = "PlayerActivity";
     private ImageButton rewind, play_pause, forward, download;
     private SeekBar seekBar;
@@ -182,7 +183,7 @@ public class PlayerActivity extends AppCompatActivity implements
         recyclerView = findViewById(R.id.recyclerViewMusic);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setHasFixedSize(false);
-        recyclerView.setAdapter(new MusicAdapter(this, musics));
+        recyclerView.setAdapter(musicAdapter);
 
         recyclerView.addOnItemTouchListener(
                 new RecyclerItemClickListener(PlayerActivity.this, recyclerView, new RecyclerItemClickListener.OnItemClickListener() {
@@ -308,6 +309,10 @@ public class PlayerActivity extends AppCompatActivity implements
     }
 
     private void initializeStuff() {
+        //Initialize musicAdapter with blank arraylist
+        musicAdapter = new MusicAdapter(this, musicArrayList);
+
+        //Initialize music player
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setOnPreparedListener(this);
         mediaPlayer.setOnBufferingUpdateListener(this);
@@ -545,9 +550,10 @@ public class PlayerActivity extends AppCompatActivity implements
                             protected void onPostExecute(Void aVoid) {
                                 super.onPostExecute(aVoid);
                                 hideView(downloadProgress);
-                                if (isDownloaded)
+                                if (isDownloaded) {
                                     showCustomSnackBar("Download Complete", false, null, 0);
-                                else {
+                                    musicAdapter.notifyDataSetChanged();
+                                } else {
                                     showCustomSnackBar("Something went wrong", true, "Try Again", -2);
                                 }
                             }

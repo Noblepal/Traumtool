@@ -47,7 +47,7 @@ public class ReadDreamActivity extends AppCompatActivity {
     PDFView imageViewPdf;
     ProgressBar downloadProgress, renderProgressBar;
     Dream dream;
-    File audioFile;
+    File pdfFile;
     Boolean isDownloaded = false;
     private static final String TAG = "ReadDreamActivity";
 
@@ -136,11 +136,11 @@ public class ReadDreamActivity extends AppCompatActivity {
                                 if (isDownloaded)
                                     showCustomSnackBar("Download Complete", false, null);
                                 else {
-                                    showCustomSnackBar("Something went wrong line 138", true, "Try Again");
+                                    showCustomSnackBar("Something went wrong", true, "Try Again");
                                 }
 
                                 try {
-                                    renderPDF(audioFile);
+                                    renderPDF(pdfFile);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -163,9 +163,9 @@ public class ReadDreamActivity extends AppCompatActivity {
 
             InputStream inputStream = null;
             OutputStream outputStream = null;
-            audioFile = new File(path, dream.getFileName());
+            pdfFile = new File(path, dream.getFileName());
 
-            if (audioFile.exists()) {
+            if (pdfFile.exists()) {
                 isDownloaded = true;
                 return true;
             }
@@ -177,7 +177,7 @@ public class ReadDreamActivity extends AppCompatActivity {
                 long fileSizeDownloaded = 0;
 
                 inputStream = body.byteStream();
-                outputStream = new FileOutputStream(audioFile);
+                outputStream = new FileOutputStream(pdfFile);
 
                 while (true) {
                     int read = inputStream.read(fileReader);

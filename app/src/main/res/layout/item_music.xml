@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:animateLayoutChanges="true"
     android:orientation="vertical">
 
     <com.google.android.material.card.MaterialCardView
@@ -87,13 +88,13 @@
 
                 <TextView
                     android:id="@+id/tv_file_size"
-                    android:fontFamily="@font/product_sans_regular"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="12.3MB"
                     android:layout_alignParentEnd="true"
                     android:layout_alignParentBottom="true"
+                    android:fontFamily="@font/product_sans_regular"
                     android:src="@drawable/ic_check_circle"
+                    android:text="12.3MB"
                     android:visibility="visible" />
 
             </RelativeLayout>

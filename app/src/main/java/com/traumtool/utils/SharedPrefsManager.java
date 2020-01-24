@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 public class SharedPrefsManager {
-    private static final String SHARED_PREFS_NAME = "kilimo_link";
+    private static final String SHARED_PREFS_NAME = "traumtool";
     private static SharedPrefsManager mInstance;
     private SharedPreferences sharedPreferences;
     //private Context mCtx;
@@ -20,8 +20,8 @@ public class SharedPrefsManager {
         return mInstance;
     }
 
-    public void setOfflineMode(boolean offline) {
-        sharedPreferences.edit().putBoolean("isOffline", offline).commit();
+    public void toggleOfflineMode(boolean mode) {
+        sharedPreferences.edit().putBoolean("isOffline", mode).commit();
     }
 
     public boolean getIsOffline() {
