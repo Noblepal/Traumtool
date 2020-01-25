@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/grey"
-    tools:context=".activities.PlayerActivity">
+    tools:activity=".activities.PlayerActivity">
 
     <com.flaviofaria.kenburnsview.KenBurnsView
         android:id="@+id/imageView2"
@@ -26,45 +26,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/playerToolBar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:elevation="1dp"
-        app:layout_constraintEnd_toEndOf="parent"
+    <ImageButton
+        android:id="@+id/imgBackPlayer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_margin="16dp"
+        android:background="@drawable/circle_button_bg_grey"
+        android:src="@drawable/ic_arrow_back"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <ImageButton
-                android:id="@+id/imgBack"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="16dp"
-                android:layout_marginRight="16dp"
-                android:background="@color/transparent"
-                android:src="@drawable/ic_arrow_back"
-                android:tint="@color/white" />
-
-            <!--<TextView
-                android:id="@+id/tvAppTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_toEndOf="@id/imgBack"
-                android:layout_toRightOf="@id/imgBack"
-                android:fontFamily="@font/product_sans_bold"
-                android:text="Relaxation"
-                android:textColor="@color/white"
-                android:textSize="28sp" />-->
-
-        </RelativeLayout>
-
-    </androidx.appcompat.widget.Toolbar>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
         android:id="@+id/ll_audio_name"
@@ -75,27 +46,31 @@
         android:padding="4dp"
         app:layout_constraintBottom_toTopOf="@+id/materialCardView"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/playerToolBar">
+        app:layout_constraintTop_toBottomOf="@id/imgBackPlayer">
 
         <TextView
             android:id="@+id/tvAudioNameOverlay"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="4dp"
             android:ellipsize="marquee"
             android:fontFamily="@font/product_sans_bold"
             android:singleLine="true"
             android:textColor="@color/white"
-            android:textSize="36sp"
+            android:textSize="21sp"
             tools:text="Piano" />
 
         <TextView
             android:id="@+id/tvAudioDurationOverlay"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="4dp"
             android:fontFamily="@font/product_sans_bold"
-            android:text="8:39"
             android:textColor="@color/white"
-            android:textSize="24sp" />
+            android:textSize="16sp"
+            tools:text="00:00" />
 
 
     </LinearLayout>
@@ -122,17 +97,20 @@
                 android:layout_width="100dp"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
-                android:src="@drawable/ic_image" />
+                android:src="@drawable/ic_music" />
 
-            <LinearLayout
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical"
                 android:padding="8dp">
 
                 <RelativeLayout
+                    android:id="@+id/rl_top_player"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentTop="true">
 
                     <TextView
                         android:id="@+id/tvAudioName"
@@ -152,7 +130,7 @@
                         android:singleLine="true"
                         android:textColor="@color/black"
                         android:textColorHint="@color/greyDark"
-                        android:textSize="22sp" />
+                        android:textSize="16sp" />
 
                     <TextView
                         android:id="@+id/tvRealTime"
@@ -171,12 +149,15 @@
                     style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_below="@id/rl_top_player"
+                    android:layout_marginTop="8dp"
                     android:progress="0" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
+                    android:layout_alignParentBottom="true"
+                    android:layout_centerHorizontal="true"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -239,17 +220,30 @@
 
                 </LinearLayout>
 
-            </LinearLayout>
+            </RelativeLayout>
 
         </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>
 
+    <TextView
+        android:id="@+id/tvCategoryTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="16dp"
+        android:fontFamily="@font/product_sans_bold"
+        android:text="Relaxing Music"
+        android:textColor="@color/black"
+        android:textSize="17sp"
+        app:layout_constraintTop_toBottomOf="@id/materialCardView" />
+
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/materialCardView">
+        app:layout_constraintTop_toBottomOf="@id/tvCategoryTitle">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -257,20 +251,6 @@
             android:descendantFocusability="blocksDescendants"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tvCategoryTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginRight="16dp"
-                android:fontFamily="@font/product_sans_bold"
-                android:text="Relaxing Music"
-                android:textColor="@color/black"
-                android:textSize="24sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerViewMusic"
@@ -283,7 +263,20 @@
                 app:layout_constraintTop_toBottomOf="@id/tvCategoryTitle"
                 tools:listitem="@layout/item_music" />
 
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <ProgressBar
+        android:id="@+id/retrieve_filenames_progress_bar"
+        style="@style/Widget.AppCompat.ProgressBar"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginEnd="4dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

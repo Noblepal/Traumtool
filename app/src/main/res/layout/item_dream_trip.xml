@@ -29,7 +29,7 @@
                 android:layout_width="150dp"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
-                tools:src="@drawable/relaxation" />
+                tools:src="@drawable/ic_dreamicon" />
 
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -63,7 +63,7 @@
                     android:fontFamily="@font/product_sans_regular"
                     android:singleLine="true"
                     android:text="by John Doe"
-                    android:textSize="22sp" />
+                    android:textSize="17sp" />
 
 
                 <TextView

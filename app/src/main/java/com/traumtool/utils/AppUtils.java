@@ -33,11 +33,14 @@ public class AppUtils {
     }
 
     public static void showView(View v) {
-        v.setVisibility(View.VISIBLE);
+        if (v.getVisibility() == View.INVISIBLE
+                || v.getVisibility() == View.GONE)
+            v.setVisibility(View.VISIBLE);
     }
 
     public static void hideView(View v) {
-        v.setVisibility(View.GONE);
+        if (v.getVisibility() == View.VISIBLE)
+            v.setVisibility(View.GONE);
     }
 
     public static double bytesToMbytes(long l) {
@@ -46,6 +49,16 @@ public class AppUtils {
 
     public static long roundUp2DecimalPlaces(long x) {
         return (long) (Math.round(x * 100.0) / 100.0);
+    }
+
+    public static String capitalizeEachWord(String s) {
+        String[] strArray = s.split("_");
+        StringBuilder builder = new StringBuilder();
+        for (String str : strArray) {
+            String cap = str.substring(0, 1).toUpperCase() + str.substring(1);
+            builder.append(cap).append(" ");
+        }
+        return builder.toString();
     }
 
 }

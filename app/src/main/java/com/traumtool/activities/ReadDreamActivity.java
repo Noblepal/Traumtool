@@ -1,20 +1,17 @@
 package com.traumtool.activities;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.pdf.PdfRenderer;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.ParcelFileDescriptor;
 import android.util.Log;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.pdfview.PDFView;
 import com.traumtool.R;
@@ -23,7 +20,6 @@ import com.traumtool.models.Dream;
 import com.traumtool.utils.AppUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,34 +35,26 @@ import static com.traumtool.utils.AppUtils.showView;
 
 public class ReadDreamActivity extends AppCompatActivity {
 
-    private int pageIndex;
-    private PdfRenderer pdfRenderer;
-    private PdfRenderer.Page currentPage;
-    private ParcelFileDescriptor parcelFileDescriptor;
-    private FloatingActionButton prePageButton, nextPageButton;
     PDFView imageViewPdf;
-    ProgressBar downloadProgress, renderProgressBar;
+    ProgressBar renderProgressBar;
     Dream dream;
+    TextView tvTitle;
     File pdfFile;
+    ImageButton backButton;
     Boolean isDownloaded = false;
     private static final String TAG = "ReadDreamActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTheme(R.style.FullscreenTheme);
         setContentView(R.layout.activity_read_dream);
 
-        prePageButton = findViewById(R.id.button_pre_doc);
-        nextPageButton = findViewById(R.id.button_next_doc);
         imageViewPdf = findViewById(R.id.pdfView);
-        downloadProgress = findViewById(R.id.pdf_progress_bar);
+        tvTitle = findViewById(R.id.tvAppTitle);
         renderProgressBar = findViewById(R.id.render_progress_bar);
-
-        prePageButton.setOnClickListener(v -> onPreviousDocClick());
-        nextPageButton.setOnClickListener(v -> onNextDocClick());
-
-        pageIndex = 0;
-
+        backButton = findViewById(R.id.imgBackReadDream);
+        backButton.setOnClickListener(v -> onBackPressed());
 
         getExtras();
     }
@@ -74,9 +62,16 @@ public class ReadDreamActivity extends AppCompatActivity {
     private void getExtras() {
         if (getIntent().hasExtra("item")) {
             dream = (Dream) getIntent().getSerializableExtra("item");
-            downloadPDF();
+            assert dream != null;
+            tvTitle.setText(dream.getFileName());
+            if (dream.getAuthor() != null && dream.getWords() != null) {
+                loadLocalFile();
+            } else {
+                downloadPDF();
+            }
         }
     }
+
 
     @Override
     protected void onStart() {
@@ -99,16 +94,8 @@ public class ReadDreamActivity extends AppCompatActivity {
         super.onStop();
     }
 
-    public void onPreviousDocClick() {
-        //showPage(currentPage.getIndex() - 1);
-    }
-
-    public void onNextDocClick() {
-        //..showPage(currentPage.getIndex() + 1);
-    }
-
     private void downloadPDF() {
-        showView(downloadProgress);
+        showView(renderProgressBar);
         String url = "data/" + dream.getCategory() + "/" + dream.getFileName();
         ApiService service = AppUtils.getApiService();
         service.downloadFile(url).
@@ -132,12 +119,10 @@ public class ReadDreamActivity extends AppCompatActivity {
 
                             @Override
                             protected void onPostExecute(Void aVoid) {
-                                hideView(downloadProgress);
-                                if (isDownloaded){
-
-//                                    showCustomSnackBar("Download Complete", false, null);
-                                }
-                                else {
+                                hideView(renderProgressBar);
+                                if (isDownloaded) {
+                                    //showCustomSnackBar("Download Complete", false, null);
+                                } else {
                                     showCustomSnackBar("Something went wrong", true, "Try Again");
                                 }
 
@@ -153,10 +138,16 @@ public class ReadDreamActivity extends AppCompatActivity {
                     @Override
                     public void onFailure(Call<ResponseBody> call, Throwable t) {
                         Log.d(TAG, "onFailure: " + call.toString());
-                        hideView(downloadProgress);
+                        hideView(renderProgressBar);
                         Toast.makeText(ReadDreamActivity.this, "Failed to get file, reason: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void loadLocalFile() {
+        File path = ReadDreamActivity.this.getExternalFilesDir("Download/" + dream.getCategory() + "/");
+        showCustomSnackBar("Viewing local file", false, null);
+        renderPDF(new File(path, dream.getFileName()));
     }
 
     private boolean writeResponseBodyToDisk(ResponseBody body) {
@@ -218,100 +209,10 @@ public class ReadDreamActivity extends AppCompatActivity {
         }
     }
 
-
-    private void openRenderer(Context context) throws IOException {
-        showView(renderProgressBar);
-        // In this sample, we read a PDF from the assets directory.
-        File path = ReadDreamActivity.this.getExternalFilesDir("Download/" + dream.getCategory());
-        Log.d(TAG, "openRenderer: PATH: " + path);
-        File file = new File(path, dream.getFileName());
-        if (!file.exists()) {
-            // Since PdfRenderer cannot handle the compressed asset file directly, we copy it into
-            // the cache directory.
-            //InputStream asset = context.getExternalFilesDir("text.txt");
-
-            assert path != null;
-            FileInputStream fs = new FileInputStream(path);
-            File file1 = new File(path, dream.getFileName());
-            FileOutputStream output = new FileOutputStream(file1);
-            final byte[] buffer = new byte[1024];
-            int size;
-            while ((size = fs.read(buffer)) != -1) {
-                output.write(buffer, 0, size);
-            }
-            fs.close();
-            output.close();
-            hideView(renderProgressBar);
-        }
-        parcelFileDescriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY);
-        // This is the PdfRenderer we use to render the PDF.
-        if (parcelFileDescriptor != null) {
-            pdfRenderer = new PdfRenderer(parcelFileDescriptor);
-        }
-    }
-
-    private void closeRenderer() throws IOException {
-        if (null != currentPage) {
-            currentPage.close();
-        }
-        pdfRenderer.close();
-        parcelFileDescriptor.close();
-    }
-
-    private void showPage(int index) {
-        if (pdfRenderer.getPageCount() <= index) {
-            return;
-        }
-        // Make sure to close the current page before opening another one.
-        if (null != currentPage) {
-            currentPage.close();
-        }
-        // Use `openPage` to open a specific page in PDF.
-        currentPage = pdfRenderer.openPage(index);
-        // Important: the destination bitmap must be ARGB (not RGB).
-        Bitmap bitmap = Bitmap.createBitmap(currentPage.getWidth(), currentPage.getHeight(),
-                Bitmap.Config.ARGB_8888);
-        // Here, we render the page onto the Bitmap.
-        // To render a portion of the page, use the second and third parameter. Pass nulls to get
-        // the default result.
-        // Pass either RENDER_MODE_FOR_DISPLAY or RENDER_MODE_FOR_PRINT for the last parameter.
-        currentPage.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
-        // We are ready to show the Bitmap to user.
-        //imageViewPdf.setImageBitmap(bitmap);
-        updateUi();
-    }
-
-    private void updateUi() {
-        int index = currentPage.getIndex();
-        int pageCount = pdfRenderer.getPageCount();
-        prePageButton.setEnabled(0 != index);
-        nextPageButton.setEnabled(index + 1 < pageCount);
-    }
-
-    public int getPageCount() {
-        return pdfRenderer.getPageCount();
-    }
-    private void renderPDF(File file){
+    private void renderPDF(File file) {
         imageViewPdf.fromFile(file).show();
         hideView(renderProgressBar);
     }
-
-//    private void renderPDF(File file) {
-//        imageViewPdf.fromFile(file)
-//                .pages(0, 2, 1, 3, 3, 3) // all pages are displayed by default
-//                .enableSwipe(true) // allows to block changing pages using swipe
-//                .swipeHorizontal(false)
-//                .enableDoubletap(true)
-//                .defaultPage(0)
-//                .enableAnnotationRendering(false) // render annotations (such as comments, colors or forms)
-//                .password(null)
-//                .scrollHandle(null)
-//                .enableAntialiasing(true) // improve rendering a little bit on low-res screens
-//                .spacing(0)
-//                .load();
-//
-//        hideView(renderProgressBar);
-//    }
 
     private void showCustomSnackBar(String message, boolean hasAction, @Nullable String actionText) {
         Snackbar snackbar = Snackbar.make(imageViewPdf, message, Snackbar.LENGTH_LONG);
@@ -320,4 +221,17 @@ public class ReadDreamActivity extends AppCompatActivity {
         }
         snackbar.show();
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
 }

@@ -1,6 +1,6 @@
 package com.traumtool.adapters;
 
-import android.content.Context;
+import android.app.Activity;
 import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,13 +20,13 @@ import com.traumtool.activities.SelfReflectionActivity;
 
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> {
 
-    private Context context;
+    private Activity activity;
     private int[] images;
     private String[] categories;
     private static final String TAG = "CategoryAdapter";
 
-    public CategoryAdapter(Context context, String[] categories, int[] images) {
-        this.context = context;
+    public CategoryAdapter(Activity activity, String[] categories, int[] images) {
+        this.activity = activity;
         this.images = images;
         this.categories = categories;
     }
@@ -34,7 +34,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
     @NonNull
     @Override
     public CategoryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(context).inflate(R.layout.item_category, parent, false);
+        View v = LayoutInflater.from(activity).inflate(R.layout.item_category, parent, false);
         return new CategoryViewHolder(v);
     }
 
@@ -45,26 +45,27 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         Intent intent = new Intent();
         holder.cardView.setOnClickListener(v -> {
             if (categories[position].toLowerCase().contains("dream")) {
-                intent.setClass(context, DreamActivity.class);
+                intent.setClass(activity, DreamActivity.class);
                 intent.putExtra("category", "dreamtravel");
             } else if (categories[position].toLowerCase().contains("reflection")) {
                 intent.putExtra("category", "self_reflection");
-                intent.setClass(context, SelfReflectionActivity.class);
+                intent.setClass(activity, SelfReflectionActivity.class);
             } else if (categories[position].toLowerCase().contains("meditation")) {
                 intent.putExtra("category", "meditation");
-                intent.setClass(context, PlayerActivity.class);
+                intent.setClass(activity, PlayerActivity.class);
             } else if (categories[position].toLowerCase().contains("muscle")) {
                 intent.putExtra("category", "muscle_relaxation");
-                intent.setClass(context, PlayerActivity.class);
+                intent.setClass(activity, PlayerActivity.class);
             } else if (categories[position].toLowerCase().contentEquals("relaxation")) {
                 intent.putExtra("category", "relaxation");
-                intent.setClass(context, PlayerActivity.class);
+                intent.setClass(activity, PlayerActivity.class);
             } else {
                 Log.d(TAG, "Skipping intent: no parameters defined");
             }
 
             Log.d(TAG, "onBindViewHolder: Starting activity with parameters: " + categories[position]);
-            context.startActivity(intent);
+            activity.startActivity(intent);
+            activity.overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
 
     }

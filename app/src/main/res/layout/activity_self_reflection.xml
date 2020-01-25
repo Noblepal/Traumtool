@@ -4,7 +4,19 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activities.SelfReflectionActivity">
+    tools:activity=".activities.SelfReflectionActivity">
+
+    <ImageButton
+        android:id="@+id/imgBackSelfReflection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_margin="16dp"
+        android:background="@drawable/circle_button_bg_grey"
+        android:elevation="1dp"
+        android:src="@drawable/ic_arrow_back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ProgressBar
         android:id="@+id/downloadTextFileProgress"

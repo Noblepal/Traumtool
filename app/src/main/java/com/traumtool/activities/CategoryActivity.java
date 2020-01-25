@@ -1,10 +1,8 @@
 package com.traumtool.activities;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
-import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.Switch;
@@ -38,9 +36,9 @@ public class CategoryActivity extends AppCompatActivity implements NetworkModeCh
     private void initializeData() {
         //Set switch to previously selected mode
         mSwitch = findViewById(R.id.switch_online_offline);
-        imgBack = findViewById(R.id.imgBack);
+        imgBack = findViewById(R.id.imgBackCategory);
         mSwitch.setChecked(true);
-        if (SharedPrefsManager.getInstance(this).getIsOffline()){
+        if (SharedPrefsManager.getInstance(this).getIsOffline()) {
             mSwitch.setChecked(false);
         }
         String[] categories = {"Relaxation", "Dream Trips", "Meditation", "Self-reflection", "Muscle Relaxation"};
@@ -69,13 +67,7 @@ public class CategoryActivity extends AppCompatActivity implements NetworkModeCh
                 showCustomSnackBar("Offline mode set", false, null, 0);
             }
         });
-        imgBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(CategoryActivity.this, MainActivity.class));
-                finish();
-            }
-        });
+        imgBack.setOnClickListener(v -> onBackPressed());
 
     }
 
@@ -90,5 +82,17 @@ public class CategoryActivity extends AppCompatActivity implements NetworkModeCh
     @Override
     public boolean isOfflineEnabled(boolean isOffline) {
         return isOffline;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 }

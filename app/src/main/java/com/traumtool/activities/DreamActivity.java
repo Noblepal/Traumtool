@@ -1,52 +1,94 @@
 package com.traumtool.activities;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
+import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import com.traumtool.R;
 import com.traumtool.adapters.DreamAdapter;
 import com.traumtool.interfaces.ApiService;
 import com.traumtool.models.Dream;
 import com.traumtool.models.DreamFileResponse;
 import com.traumtool.utils.AppUtils;
+import com.traumtool.utils.SharedPrefsManager;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static com.traumtool.utils.AppUtils.hideView;
+import static com.traumtool.utils.AppUtils.showView;
+
 public class DreamActivity extends AppCompatActivity {
 
     private ArrayList<Dream> dreamArrayList = new ArrayList<>();
+    private ArrayList<Dream> offlineDreams = new ArrayList<>();
+    private ArrayList<Dream> hybridList = new ArrayList<>();
     private static final String TAG = "DreamActivity";
+    private boolean isOfflineFromPrefs;
+    private String category;
+    private ImageButton backButton;
+    private RecyclerView recyclerView;
+    private String pdfText = "";
+    private ProgressBar progressBar;
+    boolean isFoundLocal = false;
+    String[] firstLine;
+    String title_and_author;
+    String author;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTheme(R.style.FullscreenTheme);
         setContentView(R.layout.activity_dream);
 
-        retrieveBooks();
+        //Get online / offline boolean from shared preferences
+        isOfflineFromPrefs = SharedPrefsManager.getInstance(this).getIsOffline();
+        category = getIntent().getStringExtra("category");
+
+        Handler handler = new Handler();
+        handler.postDelayed(() -> {
+            initializeStuff();
+
+            if (isOfflineFromPrefs) {
+                if (getFiles()) {
+                    populateRecyclerView(offlineDreams);
+                }
+            } else {
+                retrieveBooks();
+            }
+        }, 1000);
+
     }
 
     private void retrieveBooks() {
+        AppUtils.showView(progressBar);
         ApiService service = AppUtils.getApiService();
-        service.getDreamFileList("dreamtravel").enqueue(new Callback<DreamFileResponse>() {
+        service.getDreamFileList(category).enqueue(new Callback<DreamFileResponse>() {
             @Override
             public void onResponse(Call<DreamFileResponse> call, Response<DreamFileResponse> response) {
                 if (response.body().getError()) {
+                    hideView(progressBar);
                     Toast.makeText(DreamActivity.this, "Error: " + response.body().getMessage(), Toast.LENGTH_SHORT).show();
                 }
                 Toast.makeText(DreamActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
                 try {
-                    dreamArrayList.addAll(response.body().getDreams());
-
-                    initializeStuff();
+                    if (getFiles()) {
+                        dreamArrayList.addAll(response.body().getDreams());
+                    }
+                    checkIfFilesExist();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -54,16 +96,123 @@ public class DreamActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<DreamFileResponse> call, Throwable t) {
+                hideView(progressBar);
                 Log.d(TAG, "onFailure: " + t.getMessage());
             }
         });
     }
 
+    private void checkIfFilesExist() {
+        Handler handler = new Handler();
+
+        handler.post(() -> {
+            for (int t = 0; t < dreamArrayList.size(); t++) {
+                for (int f = 0; f < offlineDreams.size(); f++) {
+                    if (dreamArrayList.get(t).getFileName().equals(offlineDreams.get(f).getFileName())) {
+                        Log.d(TAG, "checkIfFilesExist: Exists: " + offlineDreams.get(f).getFileName());
+                        hybridList.add(offlineDreams.get(f));
+                        isFoundLocal = true;
+                        break;
+                    } else {
+                        isFoundLocal = false;
+                        Log.d(TAG, "checkIfFilesExist: Not exists: " + dreamArrayList.get(f).getFileName());
+                    }
+                }
+                if (!isFoundLocal) {
+                    hybridList.add(dreamArrayList.get(t));
+                }
+            }
+            runOnUiThread(() -> populateRecyclerView(hybridList));
+        });
+
+    }
+
+    /*Retrieve all offline files*/
+    private boolean getFiles() {
+        showView(progressBar);
+        File path = DreamActivity.this.getExternalFilesDir("Download/" + category + "/");
+        Log.d(TAG, "getFiles: " + path);
+        String uri = String.valueOf(path);
+        File file = new File(uri);
+        File[] files = file.listFiles();
+
+        int id = 0;
+        for (File f : files) {
+            Log.d(TAG, "getFiles: " + f.getName());
+            if (f.getName() == "" || f.getName().isEmpty()) {
+                return false;
+            }
+
+            String words = getWordCount(f);
+            String author = getAuthorName(pdfText);
+
+            Dream dream = new Dream(
+                    author, words, "", id++, f.getName(), category
+            );
+
+            if (dream.getFileName().isEmpty() || dream.getFileName() == null) {
+                Log.d(TAG, "getFiles: Is empty");
+            } else {
+                offlineDreams.add(dream);
+            }
+        }
+        return true;
+    }
+
+
+    private String getWordCount(File file) {
+        pdfText = "";
+        try {
+            PdfReader reader = new PdfReader(file.getAbsolutePath());
+            int n = reader.getNumberOfPages();
+            for (int i = 0; i < n; i++) {
+                pdfText = pdfText + PdfTextExtractor.getTextFromPage(reader, i + 1).trim() + "\n"; //Extracting the content from the different pages
+            }
+            //System.out.println(pdfText);
+            reader.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        String[] wc = pdfText.split("\\s+");
+        return String.valueOf(wc.length);
+    }
+
+    private String getAuthorName(String text) {
+        if (text.isEmpty()) return "";
+        firstLine = text.split("\n", 2);
+        title_and_author = firstLine[0];
+        Log.d(TAG, "getAuthorName: " + title_and_author);
+
+        author = title_and_author.substring(title_and_author.indexOf("~") + 2);
+        Log.d(TAG, "getAuthorName: author: " + author);
+
+        return author;
+    }
+
     private void initializeStuff() {
-        RecyclerView recyclerView = findViewById(R.id.recyclerViewDream);
+        progressBar = findViewById(R.id.dream_progress_bar);
+        recyclerView = findViewById(R.id.recyclerViewDream);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setHasFixedSize(false);
-        recyclerView.setAdapter(new DreamAdapter(this, dreamArrayList));
+        backButton = findViewById(R.id.imgBackDream);
+        backButton.setOnClickListener(v -> onBackPressed());
 
+    }
+
+    private void populateRecyclerView(ArrayList<Dream> dreams) {
+        hideView(progressBar);
+        recyclerView.setAdapter(new DreamAdapter(this, dreams));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 }

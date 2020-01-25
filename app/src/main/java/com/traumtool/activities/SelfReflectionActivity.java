@@ -5,6 +5,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -13,10 +15,12 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.android.material.snackbar.Snackbar;
 import com.traumtool.R;
 import com.traumtool.interfaces.ApiService;
-import com.traumtool.models.Music;
 import com.traumtool.models.Question;
 import com.traumtool.models.QuestionFileResponse;
 import com.traumtool.utils.AppUtils;
@@ -47,12 +51,14 @@ public class SelfReflectionActivity extends AppCompatActivity {
     private static final String TAG = "SelfReflectionActivity";
     TextView tvQuestion;
     RelativeLayout buttonNextQuestion;
+    ImageButton backButton;
     ProgressBar downloadTextFileProgress;
     String category;
+    ImageView backGround;
     Question question;
     File questionFile;
     int lastid;
-    String read_files=" ";
+    String read_files = " ";
     boolean isDownloaded = false, isOfflineFromPrefs = false;
 
     @Override
@@ -66,14 +72,23 @@ public class SelfReflectionActivity extends AppCompatActivity {
     }
 
     private void initializeStuff() {
+        backGround = findViewById(R.id.imageViewReflection);
+        backButton = findViewById(R.id.imgBackSelfReflection);
+        backButton.setOnClickListener(v -> onBackPressed());
+
+        Glide.with(this).load("https://source.unsplash.com/random/?nature,water")
+                .fallback(R.drawable.relaxation)
+                .placeholder(R.drawable.relaxation)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .transition(DrawableTransitionOptions.withCrossFade(700))
+                .into(backGround);
+
         tvQuestion = findViewById(R.id.textViewQuestion);
         buttonNextQuestion = findViewById(R.id.materialButtonReflection);
         downloadTextFileProgress = findViewById(R.id.downloadTextFileProgress);
 
         //Get online/offline boolean from shared preferences
         isOfflineFromPrefs = SharedPrefsManager.getInstance(this).getIsOffline();
-
-//        retrieveQuestionList();
 
         if (isOfflineFromPrefs) {
             //Retrieve locally downloaded files
@@ -95,22 +110,22 @@ public class SelfReflectionActivity extends AppCompatActivity {
      * Display next random question from text files
      */
     private void displayNextQuestion(File question) {
-        if (question==null){
+        if (question == null) {
             tvQuestion.setText("");
             return;
         }
         Log.d(TAG, "displayNextQuestion: " + question.getName());
         StringBuilder text = new StringBuilder();
         try {
-            question= new File(question.getPath());
+            question = new File(question.getPath());
             BufferedReader br = new BufferedReader(new FileReader(question));
             String line;
             while ((line = br.readLine()) != null) {
                 text.append(line);
                 text.append('\n');
             }
-            br.close() ;
-        }catch (IOException e) {
+            br.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
         Log.d(TAG, "displayNextQuestion: " + text.toString());
@@ -130,7 +145,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
                 return;
             }
             Question question = new Question(
-                    uri+"/"+f.getName(),
+                    uri + "/" + f.getName(),
                     id++,
                     f.getName(),
                     category
@@ -142,34 +157,34 @@ public class SelfReflectionActivity extends AppCompatActivity {
                 offlineFiles.add(question);
             }
         }
-        lastid=id;
+        lastid = id;
         displayNextQuestion(getNextFile());
     }
 
-    private File getNextFile(){
+    private File getNextFile() {
         File path = SelfReflectionActivity.this.getExternalFilesDir("Download/" + category);
         String uri = String.valueOf(path);
-        File file=null;
+        File file = null;
         Random r = new Random();
 
-        int i1 = r.nextInt((lastid)- 1) ;
-        String[] miami=read_files.trim().split(" ");
-        int miami1=1;
-        while (read_files.contains(Integer.toString(i1)) && miami.length!=miami1){
+        int i1 = r.nextInt((lastid) - 1);
+        String[] miami = read_files.trim().split(" ");
+        int miami1 = 1;
+        while (read_files.contains(Integer.toString(i1)) && miami.length != miami1) {
             r = new Random();
-            i1 = r.nextInt((lastid )- 1);
+            i1 = r.nextInt((lastid) - 1);
             miami1++;
         }
-        Log.e(TAG, "getNextFile: rand no : "+i1);
-        read_files=read_files+" "+ i1;
-        int cc=0,ff=0;
-        for (Question s:offlineFiles){
-            if (s.getId()==i1){
-                uri=s.getFileUrl();
-                Log.e(TAG, "getNextFile: URI: "+uri);
-                file= new File(uri);
-            }else {
-                Log.e(TAG, "getNextFile: not me: "+uri );
+        Log.e(TAG, "getNextFile: rand no : " + i1);
+        read_files = read_files + " " + i1;
+        int cc = 0, ff = 0;
+        for (Question s : offlineFiles) {
+            if (s.getId() == i1) {
+                uri = s.getFileUrl();
+                Log.e(TAG, "getNextFile: URI: " + uri);
+                file = new File(uri);
+            } else {
+                Log.e(TAG, "getNextFile: not me: " + uri);
                 cc++;
             }
             ff++;
@@ -202,9 +217,9 @@ public class SelfReflectionActivity extends AppCompatActivity {
                     questionArrayList.addAll(response.body().getQuestions());
                     Log.d(TAG, "onResponse: SIZE:: " + questionArrayList.size());
                     for (int C = 0; C < questionArrayList.size(); C++) {
-                        if (isAvailableOffline(questionArrayList.get(C))){
+                        if (isAvailableOffline(questionArrayList.get(C))) {
 
-                        }else {
+                        } else {
                             downloadQuestion(questionArrayList.get(C));
                         }
                     }
@@ -335,5 +350,17 @@ public class SelfReflectionActivity extends AppCompatActivity {
     private void showCustomSnackBar(String message, boolean hasAction, @Nullable String actionText) {
         Snackbar snackbar = Snackbar.make(tvQuestion, message, Snackbar.LENGTH_LONG);
         snackbar.show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 }

@@ -7,11 +7,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.ActivityOptionsCompat;
-import androidx.core.util.Pair;
-import androidx.core.view.ViewCompat;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.traumtool.R;
 
 /**
@@ -20,7 +19,7 @@ import com.traumtool.R;
  */
 public class MainActivity extends AppCompatActivity {
 
-    ImageView logo;
+    ImageView logo, backGround;
     RelativeLayout rl_main;
     TextView startApp;
 
@@ -32,14 +31,33 @@ public class MainActivity extends AppCompatActivity {
         logo = findViewById(R.id.img_logo);
         rl_main = findViewById(R.id.rl_start_app);
         startApp = findViewById(R.id.tv_start_app);
+        backGround = findViewById(R.id.imageView);
+
+        Glide.with(this).load("https://source.unsplash.com/random/?nature,water")
+                .fallback(R.drawable.relaxation)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .placeholder(R.drawable.relaxation)
+                .transition(DrawableTransitionOptions.withCrossFade(600))
+                .into(backGround);
 
         rl_main.setOnClickListener(v -> {
-            ActivityOptionsCompat options = ActivityOptionsCompat
-                    .makeSceneTransitionAnimation(this,
-                            new Pair<>(logo, ViewCompat.getTransitionName(logo)));
-            ActivityCompat.startActivity(this, new Intent(this, CategoryActivity.class), options.toBundle());
-
+            Intent i = new Intent();
+            i.setClass(this, CategoryActivity.class);
+            startActivity(i);
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
 }

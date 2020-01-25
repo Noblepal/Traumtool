@@ -4,119 +4,75 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activities.ReadDreamActivity">
+    tools:activity=".activities.ReadDreamActivity">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/readToolBar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+    <TextView
+        android:id="@+id/tvAppTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_margin="10dp"
+        android:layout_toEndOf="@id/imgBackReadDream"
+        android:background="@drawable/bg_title"
+        android:ellipsize="marquee"
+        android:fontFamily="@font/product_sans_bold"
+        android:singleLine="true"
+        android:textColor="@color/black"
+        android:textSize="28sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/imgBackReadDream"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Traumtool" />
+
+    <ProgressBar
+        android:id="@+id/render_progress_bar"
+        style="@style/Widget.AppCompat.ProgressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:elevation="2dp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <ImageButton
-                android:id="@+id/imgBack"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="16dp"
-                android:layout_marginRight="16dp"
-                android:background="@color/transparent"
-                android:src="@drawable/ic_arrow_back" />
-
-            <TextView
-                android:id="@+id/tvAppTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_toEndOf="@id/imgBack"
-                android:layout_toRightOf="@id/imgBack"
-                android:fontFamily="@font/product_sans_bold"
-                android:text="Traumtool"
-                android:textColor="@color/black"
-                android:textSize="28sp" />
-
-            <ProgressBar
-                android:id="@+id/pdf_progress_bar"
-                style="@style/Widget.AppCompat.ProgressBar"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_margin="4dp"
-                android:visibility="gone" />
-
-        </RelativeLayout>
-
-    </androidx.appcompat.widget.Toolbar>
-
-    <!-- <TextView
-         android:id="@+id/tvDreamText"
-         android:layout_width="0dp"
-         android:layout_height="0dp"
-         android:fontFamily="@font/product_sans_regular"
-         android:padding="8dp"
-         tools:text="wegniv aerbnaeb aeboaenboaie aeoibnaebi"
-         android:textSize="21sp"
-         app:layout_constraintTop_toBottomOf="@id/readToolBar"
-         app:layout_constraintBottom_toTopOf="@id/ll_nav"
-         app:layout_constraintEnd_toEndOf="parent"
-         app:layout_constraintStart_toStartOf="parent" />-->
-
-    <RelativeLayout
-        android:layout_width="match_parent"
+    <com.pdfview.PDFView
+        android:id="@+id/pdfView"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/readToolBar">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:panEnabled="true"
+        app:quickScaleEnabled="true"
+        app:zoomEnabled="true" />
 
-        <ProgressBar
-            android:id="@+id/render_progress_bar"
-            style="@style/Widget.AppCompat.ProgressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:layout_margin="4dp"
-            android:elevation="2dp"
-            android:visibility="visible" />
-            <com.pdfview.PDFView
-                android:id="@+id/pdfView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_above="@id/button_pre_doc"
-                        />
-        <!--        <com.github.barteksc.pdfviewer.PDFView-->
-<!--            android:id="@+id/pdfView"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="match_parent"-->
-<!--            android:layout_above="@id/button_pre_doc" />-->
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/button_pre_doc"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentBottom="true"
-            android:layout_margin="16dp"
-            app:backgroundTint="@color/white"
-            app:fabSize="auto"
-            app:srcCompat="@android:drawable/ic_media_previous" />
+    <ImageButton
+        android:id="@+id/imgBackReadDream"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_margin="8dp"
+        android:background="@drawable/circle_button_bg_grey"
+        android:src="@drawable/ic_arrow_back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/button_next_doc"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignBaseline="@+id/button_pre_doc"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentBottom="true"
-            android:layout_margin="16dp"
-            app:backgroundTint="@color/white"
-            app:fabSize="auto"
-            app:srcCompat="@android:drawable/ic_media_next" />
-
-    </RelativeLayout>
+    <!-- <ProgressBar
+         android:id="@+id/pdf_progress_bar"
+         style="@style/Widget.AppCompat.ProgressBar"
+         android:layout_width="36dp"
+         android:layout_height="36dp"
+         android:layout_alignParentEnd="true"
+         android:layout_centerVertical="true"
+         android:visibility="gone"
+         app:layout_constraintBottom_toTopOf="parent"
+         app:layout_constraintEnd_toStartOf="parent"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toTopOf="parent" />-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

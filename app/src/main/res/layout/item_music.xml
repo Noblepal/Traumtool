@@ -30,7 +30,7 @@
                 android:layout_width="100dp"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
-                tools:src="@drawable/relaxation" />
+                tools:src="@drawable/ic_audio" />
 
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -54,7 +54,7 @@
                     android:singleLine="true"
                     android:text="The Stormy Day"
                     android:textColor="@color/black"
-                    android:textSize="22sp" />
+                    android:textSize="16sp" />
 
                 <ImageButton
                     android:id="@+id/img_play_from_list"

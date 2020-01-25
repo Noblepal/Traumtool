@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/grey"
-    tools:context=".activities.DreamActivity">
+    tools:activity=".activities.DreamActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/dreamToolBar"
@@ -20,7 +20,7 @@
             android:layout_height="match_parent">
 
             <ImageButton
-                android:id="@+id/imgBack"
+                android:id="@+id/imgBackDream"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
@@ -34,10 +34,19 @@
                 android:layout_width="170dp"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_toEndOf="@id/imgBack"
-                android:layout_toRightOf="@id/imgBack"
+                android:layout_toEndOf="@id/imgBackDream"
+                android:layout_toRightOf="@id/imgBackDream"
                 android:padding="0dp"
                 android:src="@drawable/ic_dream" />
+
+            <ProgressBar
+                android:id="@+id/dream_progress_bar"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_margin="16dp"
+                android:visibility="gone" />
 
         </RelativeLayout>
 

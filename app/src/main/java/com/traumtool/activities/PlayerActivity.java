@@ -2,9 +2,16 @@ package com.traumtool.activities;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,6 +19,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -24,7 +32,9 @@ import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.github.piasy.rxandroidaudio.RxAudioPlayer;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.android.material.snackbar.Snackbar;
 import com.traumtool.R;
 import com.traumtool.adapters.MusicAdapter;
@@ -37,17 +47,15 @@ import com.traumtool.utils.RecyclerItemClickListener;
 import com.traumtool.utils.SharedPrefsManager;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+
+import static android.os.Environment.DIRECTORY_DOWNLOADS;
 
 public class PlayerActivity extends AppCompatActivity implements
         MediaPlayer.OnCompletionListener,
@@ -58,10 +66,11 @@ public class PlayerActivity extends AppCompatActivity implements
     private ArrayList<Music> offlineFiles = new ArrayList<>();
     private MusicAdapter musicAdapter;
     private static final String TAG = "PlayerActivity";
-    private ImageButton rewind, play_pause, forward, download;
+    private ImageButton rewind, play_pause, forward, download, backButton;
+    ImageView topImage;
     private SeekBar seekBar;
     private TextView realTime, audioName, audioNameOverlay, audioDurationOverlay, mainCategory;
-    private ProgressBar bufferProgressBar, downloadProgress;
+    private ProgressBar bufferProgressBar, downloadProgress, loadingProgressBar;
     private RecyclerView recyclerView;
     private boolean isStreaming = false, isDownloaded = false, isOfflineFromPrefs;
 
@@ -71,7 +80,9 @@ public class PlayerActivity extends AppCompatActivity implements
     private int realTimeLength;
     private String category;
 
-    RxAudioPlayer player;
+    private DownloadManager mgr = null;
+    private long lastDownload = -1L;
+
     AsyncTask<String, String, String> streamTask;
 
     private static final int PERMISSION_REQUEST = 100;
@@ -89,12 +100,15 @@ public class PlayerActivity extends AppCompatActivity implements
         requestPermission();
         findViews();
         initializeStuff();
+        setUpDownloadManager();
+
 
         //Get online/offline boolean from shared preferences
         isOfflineFromPrefs = SharedPrefsManager.getInstance(this).getIsOffline();
 
         if (isOfflineFromPrefs) {
             //Retrieve locally downloaded files
+            download.setImageResource(R.drawable.ic_check_circle);
             getFiles();
         } else {
             //Retrieve files from server
@@ -104,12 +118,14 @@ public class PlayerActivity extends AppCompatActivity implements
 
     //Download audio list from server
     private void retrieveAudioFiles() {
+        showView(loadingProgressBar);
         ApiService service = AppUtils.getApiService();
         service.getFileList(category)
                 .enqueue(new Callback<FileResponse>() {
                     @Override
                     public void onResponse(Call<FileResponse> call, Response<FileResponse> response) {
                         Toast.makeText(PlayerActivity.this, "Complete", Toast.LENGTH_SHORT).show();
+                        hideView(loadingProgressBar);
                         if (response.isSuccessful()) {
                             try {
                                 List<Music> audios = response.body().getAudio();
@@ -129,6 +145,7 @@ public class PlayerActivity extends AppCompatActivity implements
 
                     @Override
                     public void onFailure(Call<FileResponse> call, Throwable t) {
+                        hideView(loadingProgressBar);
                         showCustomSnackBar("Failed to get data. Possibly due to network error", true, "Try Again", -2);
                         Log.d(TAG, "onFailure: " + t.getMessage());
                     }
@@ -173,61 +190,65 @@ public class PlayerActivity extends AppCompatActivity implements
                 }
             } else {
                 download.setImageResource(R.drawable.ic_file_download);
-                download.setOnClickListener(v -> downloadAudio(audio));
+                download.setOnClickListener(v -> startDownload(download, audio));
                 streamAudioFromServer(audio.getFileUrl());
             }
         }
     }
 
     private void populateRecyclerView(ArrayList<Music> musics) {
+        musicAdapter = new MusicAdapter(this, musics);
+        Log.d(TAG, "populateRecyclerView: Size: " + musics.size());
         recyclerView = findViewById(R.id.recyclerViewMusic);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setHasFixedSize(false);
         recyclerView.setAdapter(musicAdapter);
 
         recyclerView.addOnItemTouchListener(
-                new RecyclerItemClickListener(PlayerActivity.this, recyclerView, new RecyclerItemClickListener.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(View view, int position) {
-                        //Stop currently playing audio
-                        try {
-                            stopMediaPlayer(mediaPlayer);
-                        } catch (Exception e) {
-                            Log.e(TAG, "onItemClick: Already stopped or not initialized");
-                        }
-
-                        if (isOfflineFromPrefs) {
-                            playingAudio = musics.get(position); //Load files from offline list
-                            startOfflinePlayer(playingAudio.getFileUrl());
-                        } else {
-                            playingAudio = musics.get(position);
-                            if (isAvailableOffline(playingAudio)) {
-                                download.setImageResource(R.drawable.ic_check_circle);
-                                download.setOnClickListener(null);
+                new RecyclerItemClickListener(PlayerActivity.this, recyclerView,
+                        new RecyclerItemClickListener.OnItemClickListener() {
+                            @Override
+                            public void onItemClick(View view, int position) {
+                                //Stop currently playing audio
                                 try {
-                                    playFromOffline(playingAudio);
-                                    return;
-                                } catch (IOException e) {
-                                    Log.d(TAG, "onPreExecute: Unable to open file reason: " + e.getLocalizedMessage());
-                                    e.printStackTrace();
+                                    stopMediaPlayer(mediaPlayer);
+                                } catch (Exception e) {
+                                    Log.e(TAG, "onItemClick: Already stopped or not initialized");
                                 }
-                            } else {
-                                if (isStreaming)
-                                    streamTask.cancel(true);
-                                //Play(Stream) the online file
-                                loadFileIntoPlayer(playingAudio);
+
+                                if (isOfflineFromPrefs) {
+                                    playingAudio = musics.get(position); //Load files from offline list
+                                    startOfflinePlayer(playingAudio.getFileUrl());
+
+                                } else {
+                                    playingAudio = musics.get(position);
+                                    if (isAvailableOffline(playingAudio)) {
+                                        download.setImageResource(R.drawable.ic_check_circle);
+                                        download.setOnClickListener(null);
+                                        try {
+                                            playFromOffline(playingAudio);
+                                            return;
+                                        } catch (Exception e) {
+                                            Log.d(TAG, "onPreExecute: Unable to open file reason: " + e.getLocalizedMessage());
+                                            e.printStackTrace();
+                                        }
+                                    } else {
+                                        if (isStreaming)
+                                            streamTask.cancel(true);
+                                        //Play(Stream) the online file
+                                        loadFileIntoPlayer(playingAudio);
+                                    }
+                                }
+
+                                Log.d(TAG, "onItemClick: " + playingAudio.toString());
+
                             }
-                        }
 
-                        Log.d(TAG, "onItemClick: " + playingAudio.toString());
-
-                    }
-
-                    @Override
-                    public void onLongItemClick(View view, int position) {
-                        // do whatever
-                    }
-                })
+                            @Override
+                            public void onLongItemClick(View view, int position) {
+                                // do whatever
+                            }
+                        })
         );
 
     }
@@ -273,8 +294,8 @@ public class PlayerActivity extends AppCompatActivity implements
                     playPauseAudio(mediaPlayer);
                     mediaFileLength = mp.getDuration();
                     realTimeLength = mediaFileLength;
-                    audioNameOverlay.setText(playingAudio.getFilename());
-                    audioName.setText(playingAudio.getFilename());
+                    audioNameOverlay.setText(AppUtils.removeFileExtensionFromString(playingAudio.getFilename()));
+                    audioName.setText(AppUtils.removeFileExtensionFromString(playingAudio.getFilename()));
                     audioDurationOverlay.setText(AppUtils.formatStringToTime(realTimeLength));
                     updateSeekBar2(mp);
                 }
@@ -309,15 +330,19 @@ public class PlayerActivity extends AppCompatActivity implements
     }
 
     private void initializeStuff() {
-        //Initialize musicAdapter with blank arraylist
-        musicAdapter = new MusicAdapter(this, musicArrayList);
-
         //Initialize music player
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setOnPreparedListener(this);
         mediaPlayer.setOnBufferingUpdateListener(this);
         mediaPlayer.setOnCompletionListener(this);
         play_pause.setOnClickListener(v -> playPauseAudio(mediaPlayer));
+
+        Glide.with(this).load("https://source.unsplash.com/random/?nature,water")
+                .fallback(R.drawable.self_reflection)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .transition(DrawableTransitionOptions.withCrossFade(600))
+                .placeholder(R.drawable.self_reflection)
+                .into(topImage);
 
     }
 
@@ -423,14 +448,18 @@ public class PlayerActivity extends AppCompatActivity implements
 
     private void findViews() {
         rewind = findViewById(R.id.img_rewind);
+        topImage = findViewById(R.id.imageView2);
         play_pause = findViewById(R.id.img_play_pause);
         forward = findViewById(R.id.img_forward);
         bufferProgressBar = findViewById(R.id.buffering_progress_bar);
+        loadingProgressBar = findViewById(R.id.retrieve_filenames_progress_bar);
         downloadProgress = findViewById(R.id.download_progress_bar);
         realTime = findViewById(R.id.tvRealTime);
         download = findViewById(R.id.img_download);
         mainCategory = findViewById(R.id.tvCategoryTitle);
-        mainCategory.setText(category);
+        mainCategory.setText(AppUtils.capitalizeEachWord(category));
+        backButton = findViewById(R.id.imgBackPlayer);
+        backButton.setOnClickListener(v -> onBackPressed());
 
         audioName = findViewById(R.id.tvAudioName);
         audioNameOverlay = findViewById(R.id.tvAudioNameOverlay);
@@ -477,98 +506,12 @@ public class PlayerActivity extends AppCompatActivity implements
             mediaPlayer.stop();
         }
         Log.e(TAG, "onDestroy: ");
+
+        unregisterReceiver(onComplete);
+        unregisterReceiver(onNotificationClick);
+
         PlayerActivity.this.finish();
-    }
-
-    private void downloadAudio(Music audio) {
-
-        showView(downloadProgress);
-
-        /*
-         * VOLLEY CODE HERE
-         * not in use though
-         * but just in case retrofit stops working again !!!
-         * TODO: will delete after thorough testing
-         *
-         */
-
-        //String url = AppUtils.BASE_URL + "data/" + audio.getCategory() + "/" + audio.getFilename();
-        /*Log.d(TAG, "downloadAudio: This is the url: " + url);
-        //Try volley:
-        InputStreamVolleyRequest request = new InputStreamVolleyRequest(Request.Method.GET, url,
-                new com.android.volley.Response.Listener<byte[]>() {
-                    @Override
-                    public void onResponse(byte[] response) {
-
-                        hideView(downloadProgress);
-                        try {
-                            if (response != null) {
-                                FileOutputStream outputStream;
-                                String name = audio.getFilename();
-                                outputStream = openFileOutput(name, Context.MODE_PRIVATE);
-                                outputStream.write(response);
-                                outputStream.close();
-                                Toast.makeText(PlayerActivity.this, "Download complete", Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(PlayerActivity.this, "Bad response", Toast.LENGTH_SHORT).show();
-                            }
-                        } catch (Exception e) {
-                            Log.d(TAG, "onResponse: Unable to download file: ");
-                            e.printStackTrace();
-                        }
-                    }
-                }, new com.android.volley.Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                hideView(downloadProgress);
-                error.printStackTrace();
-            }
-        }, null);
-
-        RequestQueue queue = Volley.newRequestQueue(getApplicationContext(), new HurlStack());
-        queue.add(request);*/
-
-
-        String url = "data/" + audio.getCategory() + "/" + audio.getFilename();
-        ApiService service = AppUtils.getApiService();
-        service.downloadFile(url).
-                enqueue(new Callback<ResponseBody>() {
-                    @SuppressLint("StaticFieldLeak")
-                    @Override
-                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                        //TODO: In case it stops working (again) Delete this AsyncTask and remove the @Streaming annotation from the API
-                        new AsyncTask<Void, Void, Void>() {
-                            @Override
-                            protected Void doInBackground(Void... voids) {
-                                if (response.body() != null) {
-                                    isDownloaded = writeResponseBodyToDisk(response.body());//Write downloaded file to disk
-                                } else {
-                                    showCustomSnackBar("Something went wrong", true, "Try Again", -2);
-                                }
-                                return null;
-                            }
-
-                            @Override
-                            protected void onPostExecute(Void aVoid) {
-                                super.onPostExecute(aVoid);
-                                hideView(downloadProgress);
-                                if (isDownloaded) {
-                                    showCustomSnackBar("Download Complete", false, null, 0);
-                                    musicAdapter.notifyDataSetChanged();
-                                } else {
-                                    showCustomSnackBar("Something went wrong", true, "Try Again", -2);
-                                }
-                            }
-                        }.execute();
-                    }
-
-                    @Override
-                    public void onFailure(Call<ResponseBody> call, Throwable t) {
-                        Log.d(TAG, "onFailure: " + call.toString());
-                        hideView(downloadProgress);
-                        Toast.makeText(PlayerActivity.this, "Failed to get file, reason: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
     private void showView(View v) {
@@ -577,59 +520,6 @@ public class PlayerActivity extends AppCompatActivity implements
 
     private void hideView(View v) {
         v.setVisibility(View.INVISIBLE);
-    }
-
-
-    private boolean writeResponseBodyToDisk(ResponseBody body) {
-        try {
-            File path = PlayerActivity.this.getExternalFilesDir("Download/" + playingAudio.getCategory() + "/");
-
-            InputStream inputStream = null;
-            OutputStream outputStream = null;
-            File audioFile = new File(path, playingAudio.getFilename());
-
-            try {
-                byte[] fileReader = new byte[4096];
-
-                long fileSize = body.contentLength();
-                long fileSizeDownloaded = 0;
-
-                inputStream = body.byteStream();
-                outputStream = new FileOutputStream(audioFile);
-
-                while (true) {
-                    int read = inputStream.read(fileReader);
-
-                    if (read == -1) {
-                        break;
-                    }
-
-                    outputStream.write(fileReader, 0, read);
-
-                    fileSizeDownloaded += read;
-
-                    Log.d(TAG, "file download: " + fileSizeDownloaded + " of " + fileSize);
-                }
-
-                outputStream.flush();
-
-                return true;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            } finally {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-
-                if (outputStream != null) {
-                    outputStream.close();
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
     }
 
     private boolean isAvailableOffline(Music file) {
@@ -700,7 +590,7 @@ public class PlayerActivity extends AppCompatActivity implements
     private void showCustomSnackBar(String message, boolean hasAction, @Nullable String actionText, int LENGTH) {
         Snackbar snackbar = Snackbar.make(download, message, LENGTH);
         if (hasAction) {
-            snackbar.setAction(actionText, v -> downloadAudio(playingAudio));
+            snackbar.setAction(actionText, v -> startDownload(download, playingAudio));
         }
         snackbar.show();
     }
@@ -714,5 +604,113 @@ public class PlayerActivity extends AppCompatActivity implements
     @Override
     public boolean isOfflineEnabled(boolean isOffline) {
         return isOffline;
+    }
+
+
+    private void setUpDownloadManager() {
+        mgr = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+        registerReceiver(onComplete,
+                new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        registerReceiver(onNotificationClick,
+                new IntentFilter(DownloadManager.ACTION_NOTIFICATION_CLICKED));
+    }
+
+    public void startDownload(View v, Music audio) {
+        showView(downloadProgress);
+        Uri uri = Uri.parse(audio.getFileUrl());
+
+        lastDownload = mgr.enqueue(new DownloadManager.Request(uri)
+                .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI |
+                        DownloadManager.Request.NETWORK_MOBILE)
+                .setAllowedOverRoaming(false)
+                .setTitle(audio.getFilename())
+                .setDescription("Please Wait")
+                .setDestinationInExternalFilesDir(PlayerActivity.this, DIRECTORY_DOWNLOADS,
+                        File.separator + audio.getCategory() + File.separator + audio.getFilename())
+        );
+
+        v.setEnabled(false);
+    }
+
+    public void queryStatus(View v) {
+        Cursor c = mgr.query(new DownloadManager.Query().setFilterById(lastDownload));
+
+        if (c == null) {
+            Toast.makeText(this, "Download not found!", Toast.LENGTH_LONG).show();
+        } else {
+            c.moveToFirst();
+
+            Log.d(getClass().getName(), "COLUMN_ID: " +
+                    c.getLong(c.getColumnIndex(DownloadManager.COLUMN_ID)));
+            Log.d(getClass().getName(), "COLUMN_BYTES_DOWNLOADED_SO_FAR: " +
+                    c.getLong(c.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)));
+            Log.d(getClass().getName(), "COLUMN_LAST_MODIFIED_TIMESTAMP: " +
+                    c.getLong(c.getColumnIndex(DownloadManager.COLUMN_LAST_MODIFIED_TIMESTAMP)));
+            Log.d(getClass().getName(), "COLUMN_LOCAL_URI: " +
+                    c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
+            Log.d(getClass().getName(), "COLUMN_STATUS: " +
+                    c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS)));
+            Log.d(getClass().getName(), "COLUMN_REASON: " +
+                    c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON)));
+
+            Toast.makeText(this, statusMessage(c), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void viewLog(View v) {
+        startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+    }
+
+    private String statusMessage(Cursor c) {
+        String msg = "???";
+
+        switch (c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS))) {
+            case DownloadManager.STATUS_FAILED:
+                msg = "Download failed!";
+                break;
+
+            case DownloadManager.STATUS_PAUSED:
+                msg = "Download paused!";
+                break;
+
+            case DownloadManager.STATUS_PENDING:
+                msg = "Download pending!";
+                break;
+
+            case DownloadManager.STATUS_RUNNING:
+                msg = "Download in progress!";
+                break;
+
+            case DownloadManager.STATUS_SUCCESSFUL:
+                msg = "Download complete!";
+                break;
+
+            default:
+                msg = "Download is nowhere in sight";
+                break;
+        }
+
+        return (msg);
+    }
+
+
+    BroadcastReceiver onComplete = new BroadcastReceiver() {
+        public void onReceive(Context ctxt, Intent intent) {
+            download.setEnabled(true);
+            showCustomSnackBar("Download Complete", false, null, 0);
+            hideView(downloadProgress);
+        }
+    };
+
+    BroadcastReceiver onNotificationClick = new BroadcastReceiver() {
+        public void onReceive(Context ctxt, Intent intent) {
+            Toast.makeText(ctxt, "Downloading!", Toast.LENGTH_LONG).show();
+        }
+    };
+
+    @Override
+    public void onBackPressed() {
+        finish();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 }

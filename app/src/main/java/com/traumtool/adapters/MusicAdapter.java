@@ -12,8 +12,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-//import com.bumptech.glide.Glide;
-//import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.card.MaterialCardView;
 import com.traumtool.R;
 import com.traumtool.models.Music;
@@ -21,6 +19,9 @@ import com.traumtool.utils.AppUtils;
 
 import java.io.File;
 import java.util.ArrayList;
+
+//import com.bumptech.glide.Glide;
+//import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHolder> {
 
@@ -51,15 +52,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
             AppUtils.showView(holder.offlineChecked);
             AppUtils.hideView(holder.size);
         }
-        holder.image.setImageResource(R.drawable.ic_image);
-//
-//        Glide.with(holder.image)
-//                .load(currentMusic.getFileUrl())
-//                .diskCacheStrategy(DiskCacheStrategy.ALL)
-//                .placeholder(R.drawable.ic_image)
-//                .fallback(R.drawable.ic_image)
-//                .into(holder.image);
-
+        holder.image.setImageResource(R.drawable.ic_music);
         holder.duration.setText(AppUtils.formatStringToTime(currentMusic.getDuration() * 1000));
 
     }
