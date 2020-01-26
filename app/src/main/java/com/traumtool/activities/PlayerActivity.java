@@ -4,9 +4,11 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
@@ -15,6 +17,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -42,6 +46,8 @@ import com.traumtool.interfaces.ApiService;
 import com.traumtool.interfaces.NetworkModeChangeListener;
 import com.traumtool.models.FileResponse;
 import com.traumtool.models.Music;
+import com.traumtool.services.AudioService;
+import com.traumtool.services.AudioServiceBinder;
 import com.traumtool.utils.AppUtils;
 import com.traumtool.utils.RecyclerItemClickListener;
 import com.traumtool.utils.SharedPrefsManager;
@@ -73,21 +79,33 @@ public class PlayerActivity extends AppCompatActivity implements
     private ProgressBar bufferProgressBar, downloadProgress, loadingProgressBar;
     private RecyclerView recyclerView;
     private boolean isStreaming = false, isDownloaded = false, isOfflineFromPrefs;
-
     private MediaPlayer mediaPlayer;
     private Music playingAudio;
     private int mediaFileLength;
     private int realTimeLength;
     private String category;
-
     private DownloadManager mgr = null;
     private long lastDownload = -1L;
-
     AsyncTask<String, String, String> streamTask;
-
     private static final int PERMISSION_REQUEST = 100;
     final Handler handler = new Handler();
 
+    //For background playing
+    private AudioServiceBinder audioServiceBinder;
+    private static Handler audioProgressUpdateHandler;
+    private static Handler secondaryProgressUpdateHandler;
+    //Service connection object -> bridge between activity and background service
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            audioServiceBinder = (AudioServiceBinder) service;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,7 +119,7 @@ public class PlayerActivity extends AppCompatActivity implements
         findViews();
         initializeStuff();
         setUpDownloadManager();
-
+        setupBackgroundAudioService();
 
         //Get online/offline boolean from shared preferences
         isOfflineFromPrefs = SharedPrefsManager.getInstance(this).getIsOffline();
@@ -114,6 +132,60 @@ public class PlayerActivity extends AppCompatActivity implements
             //Retrieve files from server
             retrieveAudioFiles();
         }
+    }
+
+    private void findViews() {
+        rewind = findViewById(R.id.img_rewind);
+        topImage = findViewById(R.id.imageView2);
+        play_pause = findViewById(R.id.img_play_pause);
+        forward = findViewById(R.id.img_forward);
+        bufferProgressBar = findViewById(R.id.buffering_progress_bar);
+        loadingProgressBar = findViewById(R.id.retrieve_filenames_progress_bar);
+        downloadProgress = findViewById(R.id.download_progress_bar);
+        realTime = findViewById(R.id.tvRealTime);
+        download = findViewById(R.id.img_download);
+        mainCategory = findViewById(R.id.tvCategoryTitle);
+        mainCategory.setText(AppUtils.capitalizeEachWord(category));
+        backButton = findViewById(R.id.imgBackPlayer);
+        backButton.setOnClickListener(v -> onBackPressed());
+
+        audioName = findViewById(R.id.tvAudioName);
+        audioNameOverlay = findViewById(R.id.tvAudioNameOverlay);
+        audioDurationOverlay = findViewById(R.id.tvAudioDurationOverlay);
+
+        seekBar = findViewById(R.id.seek_bar);
+        seekBar.setMax(99);//100% (0 - 99)
+        //TODO: Handle seekbar interactions
+        seekBar.setOnTouchListener((v, event) -> {
+            if (mediaPlayer.isPlaying()) {
+                SeekBar sb = (SeekBar) v;
+                int playPosition = (mediaFileLength / 100 * sb.getProgress());
+                mediaPlayer.seekTo(playPosition);
+            }
+            return false;
+        });
+    }
+
+    private void initializeStuff() {
+        //Initialize music player
+        mediaPlayer = new MediaPlayer();
+        mediaPlayer.setOnPreparedListener(this);
+        mediaPlayer.setOnBufferingUpdateListener(this);
+        mediaPlayer.setOnCompletionListener(this);
+        play_pause.setOnClickListener(v -> playPauseAudio(mediaPlayer));
+
+        Glide.with(this).load("https://source.unsplash.com/random/?nature,water")
+                .fallback(R.drawable.self_reflection)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .transition(DrawableTransitionOptions.withCrossFade(600))
+                .placeholder(R.drawable.self_reflection)
+                .into(topImage);
+
+    }
+
+    private void setupBackgroundAudioService() {
+        // Bind background audio service when activity is created.
+        bindAudioService();
     }
 
     //Download audio list from server
@@ -136,8 +208,8 @@ public class PlayerActivity extends AppCompatActivity implements
                             //Add filenames fo recyclerView
                             populateRecyclerView(musicArrayList);
 
-                            //Load first audio from list into MediaPlayer
                             loadFirstAudioFile(musicArrayList);
+                            //loadFileIntoPlayer(musicArrayList.get(0));//Load first audio file into player
                         } else {
                             showCustomSnackBar("Failed to get data", true, "Try Again", -2);
                         }
@@ -152,48 +224,35 @@ public class PlayerActivity extends AppCompatActivity implements
                 });
     }
 
-    private void loadFirstAudioFile(ArrayList<Music> musicList) {
-        playingAudio = musicList.get(0);
-        if (isAvailableOffline(playingAudio)) {
-            download.setImageResource(R.drawable.ic_check_circle);
-            download.setOnClickListener(null);
-            try {
-                playFromOffline(playingAudio);
-            } catch (IOException e) {
-                Log.d(TAG, "onPreExecute: Unable to open file reason: " + e.getLocalizedMessage());
-                e.printStackTrace();
-            }
-        } else {
-            loadFileIntoPlayer(playingAudio);
-        }
-    }
+    /*Retrieve all offline files*/
+    private void getFiles() {
+        File path = PlayerActivity.this.getExternalFilesDir("Download/" + category);
+        String uri = String.valueOf(path);
+        File file = new File(uri);
+        File[] files = file.listFiles();
 
-    private void loadFileIntoPlayer(Music audio) {
-        audioName.setText(AppUtils.removeFileExtensionFromString(audio.getFilename()));
-        audioNameOverlay.setText(AppUtils.removeFileExtensionFromString(audio.getFilename()));
-        Log.d(TAG, "loadFileIntoPlayer: url: " + audio.getFileUrl());
-        Log.d(TAG, "loadFileIntoPlayer: Audio: " + audio.getFileUrl());
-        if (isOfflineFromPrefs) {
-            download.setImageResource(R.drawable.ic_check_circle);
-            download.setOnClickListener(null);
-            //playPauseAudio();
-        } else {
-            //Check if the selected file is already available offline before streaming
-            if (isAvailableOffline(audio)) {
-                download.setImageResource(R.drawable.ic_check_circle);
-                download.setOnClickListener(null);
-                try {
-                    playFromOffline(audio);
-                } catch (IOException e) {
-                    Log.d(TAG, "onPreExecute: Unable to open file reason: " + e.getLocalizedMessage());
-                    e.printStackTrace();
-                }
+        int id = 0;
+        for (File f : files) {
+            Log.d(TAG, "getFiles: " + f.getName());
+            if (f.getName() == "" || f.getName().isEmpty()) {
+                return;
+            }
+            Music music = new Music(
+                    id++,
+                    f.getName(),
+                    category,
+                    getFileDuration(path + "/" + f.getName()),
+                    path + "/" + f.getName(),
+                    0
+            );
+
+            if (music.getFilename().isEmpty() || music.getFilename() == null) {
+                Log.d(TAG, "getFiles: Is empty");
             } else {
-                download.setImageResource(R.drawable.ic_file_download);
-                download.setOnClickListener(v -> startDownload(download, audio));
-                streamAudioFromServer(audio.getFileUrl());
+                offlineFiles.add(music);
             }
         }
+        populateRecyclerView(offlineFiles);
     }
 
     private void populateRecyclerView(ArrayList<Music> musics) {
@@ -226,7 +285,8 @@ public class PlayerActivity extends AppCompatActivity implements
                                         download.setImageResource(R.drawable.ic_check_circle);
                                         download.setOnClickListener(null);
                                         try {
-                                            playFromOffline(playingAudio);
+                                            //playFromOffline(playingAudio);
+                                            playSelectedAudio(playingAudio);
                                             return;
                                         } catch (Exception e) {
                                             Log.d(TAG, "onPreExecute: Unable to open file reason: " + e.getLocalizedMessage());
@@ -236,11 +296,12 @@ public class PlayerActivity extends AppCompatActivity implements
                                         if (isStreaming)
                                             streamTask.cancel(true);
                                         //Play(Stream) the online file
-                                        loadFileIntoPlayer(playingAudio);
+                                        //loadFileIntoPlayer(playingAudio);
+                                        playSelectedAudio(playingAudio);
                                     }
                                 }
 
-                                Log.d(TAG, "onItemClick: " + playingAudio.toString());
+                                Log.d(TAG, "onItemClick:  " + playingAudio.toString());
 
                             }
 
@@ -251,6 +312,83 @@ public class PlayerActivity extends AppCompatActivity implements
                         })
         );
 
+    }
+
+    private void loadFirstAudioFile(ArrayList<Music> musicList) {
+        playingAudio = musicList.get(0);
+        if (isAvailableOffline(playingAudio)) {
+            download.setImageResource(R.drawable.ic_check_circle);
+            download.setOnClickListener(null);
+            try {
+                playFromOffline(playingAudio);
+            } catch (IOException e) {
+                Log.d(TAG, "onPreExecute: Unable to open file reason: " + e.getLocalizedMessage());
+                e.printStackTrace();
+            }
+        } else {
+            loadFileIntoPlayer(playingAudio);
+        }
+    }
+
+    /*Can be used by background service to load file into player...*/
+    private void loadFileIntoPlayer(Music audio) {
+        audioName.setText(AppUtils.removeFileExtensionFromString(audio.getFilename()));
+        audioNameOverlay.setText(AppUtils.removeFileExtensionFromString(audio.getFilename()));
+        Log.d(TAG, "loadFileIntoPlayer: url: " + audio.getFileUrl());
+        Log.d(TAG, "loadFileIntoPlayer: Audio: " + audio.getFileUrl());
+        if (isOfflineFromPrefs) {
+            download.setImageResource(R.drawable.ic_check_circle);
+            download.setOnClickListener(null);
+            //playPauseAudio();
+        } else {
+            //Check if the selected file is already available offline before streaming
+            if (isAvailableOffline(audio)) {
+                download.setImageResource(R.drawable.ic_check_circle);
+                download.setOnClickListener(null);
+                try {
+                    playFromOffline(audio);
+                } catch (IOException e) {
+                    Log.d(TAG, "onPreExecute: Unable to open file reason: " + e.getLocalizedMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                download.setImageResource(R.drawable.ic_file_download);
+                download.setOnClickListener(v -> startDownload(download, audio));
+                //streamAudioFromServer(audio.getFileUrl());
+            }
+        }
+    }
+
+    private void playSelectedAudio(Music audio) {
+        audioName.setText(AppUtils.removeFileExtensionFromString(audio.getFilename()));
+        audioNameOverlay.setText(AppUtils.removeFileExtensionFromString(audio.getFilename()));
+        audioServiceBinder.setContext(getApplicationContext());
+        if (isAvailableOffline(audio)) {
+            playingAudio = audio;
+            audioServiceBinder.setStreamAudio(false);
+            audioServiceBinder.setAudioFileUri(Uri.parse(playingAudio.getFileUrl()));
+        } else {
+            audioServiceBinder.setStreamAudio(true);
+            audioServiceBinder.setAudioFileUrl(audio.getFileUrl());
+        }
+        createAudioProgressbarUpdater();
+        createSecondaryAudioProgressbarUpdater();
+        audioServiceBinder.setAudioProgressUpdateHandler(audioProgressUpdateHandler);
+        audioServiceBinder.setSecondaryAudioProgressUpdateHandler(secondaryProgressUpdateHandler);
+        // Start audio in background service.
+        audioServiceBinder.startAudio();
+
+        audioDurationOverlay.setText(audioServiceBinder.getTotalAudioDuration());
+
+        if (isOfflineFromPrefs) {
+            download.setImageResource(R.drawable.ic_check_circle);
+            download.setOnClickListener(null);
+        } else {
+            download.setImageResource(R.drawable.ic_file_download);
+            download.setOnClickListener(v -> startDownload(download, audio));
+            //streamAudioFromServer(audio.getFileUrl());
+        }
+        play_pause.setOnClickListener(v -> audioServiceBinder.pauseAudio());
     }
 
     // I added this class to play offline mode
@@ -319,32 +457,6 @@ public class PlayerActivity extends AppCompatActivity implements
         }
     }
 
-    private void requestPermission() {
-        if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(this,
-                        Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST);
-        }
-    }
-
-    private void initializeStuff() {
-        //Initialize music player
-        mediaPlayer = new MediaPlayer();
-        mediaPlayer.setOnPreparedListener(this);
-        mediaPlayer.setOnBufferingUpdateListener(this);
-        mediaPlayer.setOnCompletionListener(this);
-        play_pause.setOnClickListener(v -> playPauseAudio(mediaPlayer));
-
-        Glide.with(this).load("https://source.unsplash.com/random/?nature,water")
-                .fallback(R.drawable.self_reflection)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .transition(DrawableTransitionOptions.withCrossFade(600))
-                .placeholder(R.drawable.self_reflection)
-                .into(topImage);
-
-    }
 
     @SuppressLint("StaticFieldLeak")
     private void streamAudioFromServer(String url) {
@@ -399,7 +511,6 @@ public class PlayerActivity extends AppCompatActivity implements
         startOfflinePlayer(String.valueOf(file));
     }
 
-
     private void playPauseAudio(MediaPlayer player) {
         Log.d(TAG, "playPauseAudio: media: " + mediaPlayer.getDuration());
         if (!player.isPlaying()) {
@@ -446,73 +557,6 @@ public class PlayerActivity extends AppCompatActivity implements
         }
     }
 
-    private void findViews() {
-        rewind = findViewById(R.id.img_rewind);
-        topImage = findViewById(R.id.imageView2);
-        play_pause = findViewById(R.id.img_play_pause);
-        forward = findViewById(R.id.img_forward);
-        bufferProgressBar = findViewById(R.id.buffering_progress_bar);
-        loadingProgressBar = findViewById(R.id.retrieve_filenames_progress_bar);
-        downloadProgress = findViewById(R.id.download_progress_bar);
-        realTime = findViewById(R.id.tvRealTime);
-        download = findViewById(R.id.img_download);
-        mainCategory = findViewById(R.id.tvCategoryTitle);
-        mainCategory.setText(AppUtils.capitalizeEachWord(category));
-        backButton = findViewById(R.id.imgBackPlayer);
-        backButton.setOnClickListener(v -> onBackPressed());
-
-        audioName = findViewById(R.id.tvAudioName);
-        audioNameOverlay = findViewById(R.id.tvAudioNameOverlay);
-        audioDurationOverlay = findViewById(R.id.tvAudioDurationOverlay);
-
-        seekBar = findViewById(R.id.seek_bar);
-        seekBar.setMax(99);//100% (0 - 99)
-        //TODO: Handle seekbar interactions
-        seekBar.setOnTouchListener((v, event) -> {
-            if (mediaPlayer.isPlaying()) {
-                SeekBar sb = (SeekBar) v;
-                int playPosition = (mediaFileLength / 100 * sb.getProgress());
-                mediaPlayer.seekTo(playPosition);
-            }
-            return false;
-        });
-    }
-
-    @Override
-    public void onCompletion(MediaPlayer mp) {
-        play_pause.setImageResource(R.drawable.ic_play_main);
-    }
-
-    @Override
-    public void onBufferingUpdate(MediaPlayer mp, int percent) {
-        seekBar.setSecondaryProgress(percent);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        if (mediaPlayer.isPlaying()) {
-            mediaPlayer.pause();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (mediaPlayer.isPlaying()) {
-            isStreaming = false;
-            streamTask.cancel(true);
-            mediaPlayer.stop();
-        }
-        Log.e(TAG, "onDestroy: ");
-
-        unregisterReceiver(onComplete);
-        unregisterReceiver(onNotificationClick);
-
-        PlayerActivity.this.finish();
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-    }
 
     private void showView(View v) {
         v.setVisibility(View.VISIBLE);
@@ -543,70 +587,6 @@ public class PlayerActivity extends AppCompatActivity implements
         return (Integer.parseInt(time) / 1000);
     }
 
-    /*Retrieve all offline files*/
-    private void getFiles() {
-        File path = PlayerActivity.this.getExternalFilesDir("Download/" + category);
-        String uri = String.valueOf(path);
-        File file = new File(uri);
-        File[] files = file.listFiles();
-
-        int id = 0;
-        for (File f : files) {
-            Log.d(TAG, "getFiles: " + f.getName());
-            if (f.getName() == "" || f.getName().isEmpty()) {
-                return;
-            }
-            Music music = new Music(
-                    id++,
-                    f.getName(),
-                    category,
-                    getFileDuration(path + "/" + f.getName()),
-                    path + "/" + f.getName(),
-                    0
-            );
-
-            if (music.getFilename().isEmpty() || music.getFilename() == null) {
-                Log.d(TAG, "getFiles: Is empty");
-            } else {
-                offlineFiles.add(music);
-            }
-        }
-        populateRecyclerView(offlineFiles);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSION_REQUEST:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                        && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "Permission granted");
-                } else {
-                    Log.e(TAG, "Permission denied");
-                }
-        }
-    }
-
-    private void showCustomSnackBar(String message, boolean hasAction, @Nullable String actionText, int LENGTH) {
-        Snackbar snackbar = Snackbar.make(download, message, LENGTH);
-        if (hasAction) {
-            snackbar.setAction(actionText, v -> startDownload(download, playingAudio));
-        }
-        snackbar.show();
-    }
-
-    @Override
-    public void onPrepared(MediaPlayer mp) {
-        Log.d(TAG, "onPrepared: prepared listener");
-        mediaPlayer.start();
-    }
-
-    @Override
-    public boolean isOfflineEnabled(boolean isOffline) {
-        return isOffline;
-    }
-
-
     private void setUpDownloadManager() {
         mgr = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
         registerReceiver(onComplete,
@@ -630,6 +610,49 @@ public class PlayerActivity extends AppCompatActivity implements
         );
 
         v.setEnabled(false);
+    }
+
+    @SuppressLint("HandlerLeak")
+    private void createAudioProgressbarUpdater() {
+        /* Initialize audio progress handler. */
+        if (audioProgressUpdateHandler == null) {
+            audioProgressUpdateHandler = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    // The update process message is sent from AudioServiceBinder class's thread object.
+                    if (msg.what == audioServiceBinder.UPDATE_AUDIO_PROGRESS_BAR) {
+
+                        if (audioServiceBinder != null) {
+                            // Calculate the percentage.
+                            int currProgress = audioServiceBinder.getAudioProgress();
+
+                            // Update progressbar. Make the value 10 times to show more clear UI change.
+                            seekBar.setProgress(currProgress);
+                        }
+                    }
+                }
+            };
+        }
+    }
+
+    @SuppressLint("HandlerLeak")
+    private void createSecondaryAudioProgressbarUpdater() {
+        /* Initialize audio progress handler. */
+        secondaryProgressUpdateHandler = new Handler() {
+            @Override
+            public void handleMessage(@NonNull Message msg) {
+                if (msg.what == audioServiceBinder.UPDATE_AUDIO_PROGRESS_BAR) {
+
+                    if (audioServiceBinder != null) {
+                        // Calculate the percentage.
+                        int currProgress = audioServiceBinder.getSecondaryAudioProgress();
+
+                        // Update progressbar. Make the value 10 times to show more clear UI change.
+                        seekBar.setSecondaryProgress(currProgress);
+                    }
+                }
+            }
+        };
     }
 
     public void queryStatus(View v) {
@@ -707,6 +730,104 @@ public class PlayerActivity extends AppCompatActivity implements
             Toast.makeText(ctxt, "Downloading!", Toast.LENGTH_LONG).show();
         }
     };
+
+
+    private void requestPermission() {
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(this,
+                        Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST);
+        }
+    }
+
+    // Bind background service with caller activity. Then this activity can use
+    // background service's AudioServiceBinder instance to invoke related methods.
+    private void bindAudioService() {
+        if (audioServiceBinder == null) {
+            Intent intent = new Intent(PlayerActivity.this, AudioService.class);
+
+            // Below code will invoke serviceConnection's onServiceConnected method.
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+        }
+    }
+
+    // Unbound background audio service with caller activity.
+    private void unBoundAudioService() {
+        if (audioServiceBinder != null) {
+            unbindService(serviceConnection);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_REQUEST:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                        && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "Permission granted");
+                } else {
+                    Log.e(TAG, "Permission denied");
+                }
+        }
+    }
+
+    private void showCustomSnackBar(String message, boolean hasAction, @Nullable String actionText, int LENGTH) {
+        Snackbar snackbar = Snackbar.make(download, message, LENGTH);
+        if (hasAction) {
+            snackbar.setAction(actionText, v -> startDownload(download, playingAudio));
+        }
+        snackbar.show();
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+        Log.d(TAG, "onPrepared: prepared listener");
+        mediaPlayer.start();
+    }
+
+    @Override
+    public boolean isOfflineEnabled(boolean isOffline) {
+        return isOffline;
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        play_pause.setImageResource(R.drawable.ic_play_main);
+    }
+
+    @Override
+    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+        seekBar.setSecondaryProgress(percent);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (mediaPlayer.isPlaying()) {
+            mediaPlayer.pause();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mediaPlayer.isPlaying()) {
+            isStreaming = false;
+            streamTask.cancel(true);
+            mediaPlayer.stop();
+        }
+        Log.e(TAG, "onDestroy: ");
+
+        unregisterReceiver(onComplete);
+        unregisterReceiver(onNotificationClick);
+        unBoundAudioService();
+
+        PlayerActivity.this.finish();
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
 
     @Override
     public void onBackPressed() {
