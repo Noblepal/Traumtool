@@ -24,6 +24,14 @@ public class SharedPrefsManager {
         sharedPreferences.edit().putBoolean("isOffline", mode).commit();
     }
 
+    public void setIsBackgroundAudioPlaying(boolean isAudioPlaying) {
+        sharedPreferences.edit().putBoolean("isBackGroundPlayerPlaying", isAudioPlaying).apply();
+    }
+
+    public boolean isBackGroundAudioPlaying() {
+        return sharedPreferences.getBoolean("isBackGroundPlayerPlaying", false);
+    }
+
     public boolean getIsOffline() {
         return sharedPreferences.getBoolean("isOffline", false);
     }

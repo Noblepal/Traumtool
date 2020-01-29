@@ -177,13 +177,16 @@
                         android:background="@color/transparent"
                         android:src="@drawable/ic_fast_rewind" />
 
-                    <ImageButton
-                        android:id="@+id/img_play_pause"
+                    <ToggleButton
+                        android:id="@+id/btn_play_pause"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
                         android:layout_margin="2dp"
-                        android:background="@color/transparent"
-                        android:src="@drawable/ic_play_main" />
+                        android:background="@drawable/button_play_pause"
+                        android:checked="true"
+                        android:text=""
+                        android:textOff=""
+                        android:textOn="" />
 
                     <ImageButton
                         android:id="@+id/img_forward"

@@ -11,6 +11,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.traumtool.utils.SharedPrefsManager;
+
 import java.io.IOException;
 
 public class AudioServiceBinder extends Binder {
@@ -28,6 +30,9 @@ public class AudioServiceBinder extends Binder {
 
     // Media player that play audio.
     private MediaPlayer audioPlayer = null;
+
+    //Boolean to check whether player is playing
+    private boolean isAudioPlaying = false;
 
     // Caller activity context, used when play local audio file.
     private Context context = null;
@@ -86,31 +91,17 @@ public class AudioServiceBinder extends Binder {
         return secondaryAudioProgressUpdateHandler;
     }
 
+    // Return current audio player progress value.
+    public int getSecondaryAudioProgress() {
+        return bufferProgressPercent;
+    }
+
     public void setSecondaryAudioProgressUpdateHandler(Handler secondaryAudioProgressUpdateHandler) {
         this.secondaryAudioProgressUpdateHandler = secondaryAudioProgressUpdateHandler;
     }
 
-    // Start play audio.
-    public void startAudio() {
-        initAudioPlayer();
-        if (audioPlayer != null) {
-            audioPlayer.start();
-        }
-    }
-
-    // Pause playing audio.
-    public void pauseAudio() {
-        if (audioPlayer != null) {
-            audioPlayer.pause();
-        }
-    }
-
-    // Stop play audio.
-    public void stopAudio() {
-        if (audioPlayer != null) {
-            audioPlayer.stop();
-            destroyAudioPlayer();
-        }
+    public boolean isPlayerPlaying() {
+        return isAudioPlaying;
     }
 
     // Initialise audio player.
@@ -125,7 +116,7 @@ public class AudioServiceBinder extends Binder {
                     audioPlayer.setDataSource(getAudioFileUrl());
                 }
             } else if (!getAudioFileUri().toString().equals("")) {
-                Log.d(TAG, "Attempting to set url -> File URI: " + getAudioFileUri());
+                Log.d(TAG, "Attempting to set uri -> File URI: " + getAudioFileUri());
                 audioPlayer.setDataSource(getContext(), getAudioFileUri());
             } else {
                 Toast.makeText(context, "Null file url / uri", Toast.LENGTH_SHORT).show();
@@ -205,6 +196,8 @@ public class AudioServiceBinder extends Binder {
             // Run above thread object.
             updateSecondaryAudioProgressThread.start();
 
+            isAudioPlaying = true;
+
         } catch (
                 IOException ex) {
             ex.printStackTrace();
@@ -217,10 +210,9 @@ public class AudioServiceBinder extends Binder {
         if (audioPlayer != null) {
             if (audioPlayer.isPlaying()) {
                 audioPlayer.stop();
+                isAudioPlaying = false;
             }
-
             audioPlayer.release();
-
             audioPlayer = null;
         }
     }
@@ -254,8 +246,40 @@ public class AudioServiceBinder extends Binder {
         return ret;
     }
 
-    // Return current audio player progress value.
-    public int getSecondaryAudioProgress() {
-        return bufferProgressPercent;
+    // Start play audio.
+    public void startAudio() {
+        initAudioPlayer();
+        if (audioPlayer != null) {
+            audioPlayer.start();
+            isAudioPlaying = true;
+            SharedPrefsManager.getInstance(context).setIsBackgroundAudioPlaying(true);
+        }
     }
+
+    // Pause playing audio.
+    public void pauseAudio() {
+        if (audioPlayer != null) {
+            isAudioPlaying = false;
+            audioPlayer.pause();
+
+        }
+    }
+
+    public void continuePlayback() {
+        if (audioPlayer != null) {
+            isAudioPlaying = false;
+            audioPlayer.start();
+        }
+    }
+
+    // Stop play audio.
+    public void stopAudio() {
+        if (audioPlayer != null) {
+            isAudioPlaying = false;
+            audioPlayer.stop();
+            SharedPrefsManager.getInstance(context).setIsBackgroundAudioPlaying(false);
+            destroyAudioPlayer();
+        }
+    }
+
 }

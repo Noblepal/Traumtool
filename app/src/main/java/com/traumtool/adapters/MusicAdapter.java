@@ -52,7 +52,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
             AppUtils.showView(holder.offlineChecked);
             AppUtils.hideView(holder.size);
         }
-        holder.image.setImageResource(R.drawable.ic_music);
+        holder.image.setImageResource(R.drawable.ic_audio);
         holder.duration.setText(AppUtils.formatStringToTime(currentMusic.getDuration() * 1000));
 
     }
