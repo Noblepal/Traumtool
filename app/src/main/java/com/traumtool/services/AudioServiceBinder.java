@@ -184,7 +184,7 @@ public class AudioServiceBinder extends Binder {
                         // Send the message to caller activity's update audio progressbar Handler object.
                         secondaryAudioProgressUpdateHandler.sendMessage(updateAudioProgressMsg);
 
-                        // Sleep one second.
+                        // Sleep one, second.
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException ex) {
