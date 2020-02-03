@@ -20,6 +20,9 @@ import com.traumtool.utils.AppUtils;
 import java.io.File;
 import java.util.ArrayList;
 
+import static com.traumtool.utils.AppUtils.hideView;
+import static com.traumtool.utils.AppUtils.showView;
+
 //import com.bumptech.glide.Glide;
 //import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
@@ -49,11 +52,17 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
         holder.name.setText(AppUtils.removeFileExtensionFromString(currentMusic.getFilename()));
         holder.size.setText(String.format("%sMB", AppUtils.bytesToMbytes(currentMusic.getFileSize())));
         if (isAvailableOffline(currentMusic)) {
-            AppUtils.showView(holder.offlineChecked);
-            AppUtils.hideView(holder.size);
+            showView(holder.offlineChecked);
+            hideView(holder.size);
         }
         holder.image.setImageResource(R.drawable.ic_audio);
         holder.duration.setText(AppUtils.formatStringToTime(currentMusic.getDuration() * 1000));
+
+        if (currentMusic.isSelected()) {
+            showView(holder.visualizer);
+        } else {
+            hideView(holder.visualizer);
+        }
 
     }
 
@@ -71,7 +80,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
 
     class MusicViewHolder extends RecyclerView.ViewHolder {
 
-        ImageView image, offlineChecked;
+        ImageView image, offlineChecked, visualizer;
         TextView name, duration, size;
         ImageButton play;
         MaterialCardView cardView;
@@ -79,6 +88,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
         MusicViewHolder(@NonNull View itemView) {
             super(itemView);
             image = itemView.findViewById(R.id.imgMusicFromList);
+            visualizer = itemView.findViewById(R.id.img_visualizr);
             offlineChecked = itemView.findViewById(R.id.img_offline_check);
             name = itemView.findViewById(R.id.tvNameFromList);
             size = itemView.findViewById(R.id.tv_file_size);

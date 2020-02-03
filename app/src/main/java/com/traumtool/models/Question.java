@@ -8,6 +8,8 @@ import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
 public class Question implements Serializable {
+    @SerializedName("file_url")
+    @Expose
     private String fileUrl;
     @SerializedName("id")
     @Expose

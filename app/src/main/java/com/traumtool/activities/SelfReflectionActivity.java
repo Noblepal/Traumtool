@@ -1,6 +1,7 @@
 package com.traumtool.activities;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import okhttp3.ResponseBody;
@@ -41,6 +43,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import static com.traumtool.utils.AppUtils.RANDOM_PIC_URL;
 import static com.traumtool.utils.AppUtils.hideView;
 import static com.traumtool.utils.AppUtils.showView;
 
@@ -57,18 +60,17 @@ public class SelfReflectionActivity extends AppCompatActivity {
     ImageView backGround;
     Question question;
     File questionFile;
-    int lastid;
+    int lastid = 1;
     String read_files = " ";
+    List<Integer> alreadyViewedQuestions = new ArrayList<>();
     boolean isDownloaded = false, isOfflineFromPrefs = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_self_reflection);
-
-        initializeStuff();
-
         category = getIntent().getStringExtra("category");
+        initializeStuff();
     }
 
     private void initializeStuff() {
@@ -76,7 +78,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
         backButton = findViewById(R.id.imgBackSelfReflection);
         backButton.setOnClickListener(v -> onBackPressed());
 
-        Glide.with(this).load("https://source.unsplash.com/random/?nature,water")
+        Glide.with(this).load(RANDOM_PIC_URL)
                 .fallback(R.drawable.relaxation)
                 .placeholder(R.drawable.relaxation)
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
@@ -137,6 +139,8 @@ public class SelfReflectionActivity extends AppCompatActivity {
         String uri = String.valueOf(path);
         File file = new File(uri);
         File[] files = file.listFiles();
+        Log.i(TAG, "getFiles: Looking in this PATH -> " + uri);
+        Log.e(TAG, "getFiles: offline file size::::" + files.length);
 
         int id = 0;
         for (File f : files) {
@@ -162,20 +166,28 @@ public class SelfReflectionActivity extends AppCompatActivity {
     }
 
     private File getNextFile() {
+        Log.e(TAG, "getNextFile: SIZEEE::" + alreadyViewedQuestions.size());
+        if (alreadyViewedQuestions.size() > 0 && alreadyViewedQuestions.size() == offlineFiles.size()) {
+            startActivity(new Intent(SelfReflectionActivity.this, CongratulationsActivity.class));
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        }
+        hideView(tvQuestion);
         File path = SelfReflectionActivity.this.getExternalFilesDir("Download/" + category);
         String uri = String.valueOf(path);
         File file = null;
         Random r = new Random();
 
-        int i1 = r.nextInt((lastid) - 1);
+        Log.d(TAG, "getNextFile: offline -> " + offlineFiles.size());
+        int i1 = r.nextInt(offlineFiles.size());
         String[] miami = read_files.trim().split(" ");
         int miami1 = 1;
         while (read_files.contains(Integer.toString(i1)) && miami.length != miami1) {
             r = new Random();
-            i1 = r.nextInt((lastid) - 1);
+            i1 = r.nextInt(offlineFiles.size());
             miami1++;
         }
         Log.e(TAG, "getNextFile: rand no : " + i1);
+        alreadyViewedQuestions.add(i1);
         read_files = read_files + " " + i1;
         int cc = 0, ff = 0;
         for (Question s : offlineFiles) {
@@ -189,7 +201,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
             }
             ff++;
         }
-
+        showView(tvQuestion);
         return file;
 
     }
@@ -197,8 +209,8 @@ public class SelfReflectionActivity extends AppCompatActivity {
     private boolean isAvailableOffline(Question file) {
         File path = SelfReflectionActivity.this.getExternalFilesDir("Download/" + file.getCategory() + "/");
         File mFile = new File(path, file.getFilename());
-//        if (mFile.exists())
-//            file.setFileUrl(String.valueOf(mFile));
+        //if (mFile.exists())
+        //file.setFileUrl(String.valueOf(mFile));
         Log.d(TAG, "isAvailableOffline: Offline file found: " + mFile);
         return mFile.exists();
     }
@@ -211,15 +223,13 @@ public class SelfReflectionActivity extends AppCompatActivity {
                 if (response.body().getError()) {
                     Toast.makeText(SelfReflectionActivity.this, "Error: " + response.body().getMessage(), Toast.LENGTH_SHORT).show();
                 }
-                Toast.makeText(SelfReflectionActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
+                //Toast.makeText(SelfReflectionActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
                 try {
                     Log.d(TAG, "onResponse: " + response.body().getQuestions());
                     questionArrayList.addAll(response.body().getQuestions());
                     Log.d(TAG, "onResponse: SIZE:: " + questionArrayList.size());
                     for (int C = 0; C < questionArrayList.size(); C++) {
-                        if (isAvailableOffline(questionArrayList.get(C))) {
-
-                        } else {
+                        if (!isAvailableOffline(questionArrayList.get(C))) {
                             downloadQuestion(questionArrayList.get(C));
                         }
                     }
@@ -231,6 +241,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<QuestionFileResponse> call, Throwable t) {
+                showCustomSnackBar("Failed to get data. Possibly due to network error", true, "Try Again", -2);
                 Log.d(TAG, "onFailure: " + t.getMessage());
             }
         });
@@ -256,7 +267,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
                                     Log.d(TAG, "doInBackground: 142 " + isDownloaded);
 
                                 } else {
-                                    showCustomSnackBar("File downloaded", false, null);
+                                    Log.d(TAG, "doInBackground: Downloaded!");
                                 }
                                 return null;
                             }
@@ -347,7 +358,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
         }
     }
 
-    private void showCustomSnackBar(String message, boolean hasAction, @Nullable String actionText) {
+    private void showCustomSnackBar(String message, boolean hasAction, @Nullable String actionText, int LENGTH) {
         Snackbar snackbar = Snackbar.make(tvQuestion, message, Snackbar.LENGTH_LONG);
         snackbar.show();
     }
@@ -356,6 +367,16 @@ public class SelfReflectionActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        try {
+            alreadyViewedQuestions.clear();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

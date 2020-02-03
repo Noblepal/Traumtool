@@ -58,10 +58,11 @@ public class DreamActivity extends AppCompatActivity {
         isOfflineFromPrefs = SharedPrefsManager.getInstance(this).getIsOffline();
         category = getIntent().getStringExtra("category");
 
+        initializeStuff();
+        showView(progressBar);
+
         Handler handler = new Handler();
         handler.postDelayed(() -> {
-            initializeStuff();
-
             if (isOfflineFromPrefs) {
                 if (getFiles()) {
                     populateRecyclerView(offlineDreams);
@@ -74,7 +75,7 @@ public class DreamActivity extends AppCompatActivity {
     }
 
     private void retrieveBooks() {
-        AppUtils.showView(progressBar);
+        showView(progressBar);
         ApiService service = AppUtils.getApiService();
         service.getDreamFileList(category).enqueue(new Callback<DreamFileResponse>() {
             @Override
@@ -196,7 +197,6 @@ public class DreamActivity extends AppCompatActivity {
         recyclerView.setHasFixedSize(false);
         backButton = findViewById(R.id.imgBackDream);
         backButton.setOnClickListener(v -> onBackPressed());
-
     }
 
     private void populateRecyclerView(ArrayList<Dream> dreams) {

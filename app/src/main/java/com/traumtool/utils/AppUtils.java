@@ -1,5 +1,6 @@
 package com.traumtool.utils;
 
+import android.util.Log;
 import android.view.View;
 
 import com.traumtool.interfaces.ApiService;
@@ -10,6 +11,7 @@ import static java.util.Locale.US;
 
 public class AppUtils {
     public static final String BASE_URL = "http://traumtool.bplaced.net/";
+    public static final String RANDOM_PIC_URL = "https://source.unsplash.com/random/?nature,water";
 
     public static ApiService getApiService() {
         return RetrofitClient.getClient(BASE_URL).create(ApiService.class);
@@ -61,4 +63,20 @@ public class AppUtils {
         return builder.toString();
     }
 
+    public static void logThis(String TAG, int type, String message) {
+        switch (type) {
+            case 0:
+                Log.d(TAG, message);
+                break;
+            case 1:
+                Log.e(TAG, message);
+                break;
+            case 2:
+                Log.i(TAG, message);
+                break;
+            default:
+                Log.v(TAG, message);
+        }
+
+    }
 }

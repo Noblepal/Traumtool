@@ -29,7 +29,6 @@ public class CategoryActivity extends AppCompatActivity implements NetworkModeCh
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_category);
-
         initializeData();
     }
 
@@ -94,5 +93,13 @@ public class CategoryActivity extends AppCompatActivity implements NetworkModeCh
     public void onBackPressed() {
         finish();
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (SharedPrefsManager.getInstance(this).getIsOffline()) {
+            mSwitch.setChecked(false);
+        }
     }
 }

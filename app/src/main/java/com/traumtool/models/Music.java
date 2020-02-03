@@ -26,6 +26,7 @@ public class Music implements Serializable {
     @SerializedName("file_size")
     @Expose
     private long fileSize;
+    private boolean isSelected = false;
 
     public Music(Integer id, String filename, String category, int duration, String fileUrl, long fileSize) {
         this.id = id;
@@ -34,6 +35,18 @@ public class Music implements Serializable {
         this.duration = duration;
         this.fileUrl = fileUrl;
         this.fileSize = fileSize;
+    }
+
+    public void addVisualizer() {
+        this.isSelected = true;
+    }
+
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    public void setSelected(boolean selected) {
+        isSelected = selected;
     }
 
     public Integer getId() {

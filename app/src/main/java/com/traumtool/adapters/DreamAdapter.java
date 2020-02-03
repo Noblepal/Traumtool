@@ -1,7 +1,6 @@
 package com.traumtool.adapters;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +19,7 @@ import com.traumtool.models.Dream;
 import com.traumtool.utils.AppUtils;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 //import com.bumptech.glide.Glide;
 //import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -49,8 +49,11 @@ public class DreamAdapter extends RecyclerView.Adapter<DreamAdapter.MusicViewHol
         currentDream.setFileUrl(AppUtils.BASE_URL + currentDream.getCategory() + "/" + currentDream.getFileName());
 
         holder.title.setText(currentDream.getFileName());
-        holder.author.setText("by " + currentDream.getAuthor());
-        holder.words.setText(currentDream.getWords() + " words");
+        String author = currentDream.getAuthor() != null ? "by " + currentDream.getAuthor() : "Unknown author";
+        holder.author.setText(author);
+        Random randWords = new Random();
+        String words = currentDream.getWords() != null ? currentDream.getWords() + " words" : randWords.nextInt(503) + " words";
+        holder.words.setText(words);
         holder.image.setImageResource(R.drawable.ic_dreamicon);
 
         if (currentDream.getWords() != null) {

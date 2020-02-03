@@ -13,6 +13,8 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.traumtool.R;
 
+import static com.traumtool.utils.AppUtils.RANDOM_PIC_URL;
+
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
@@ -33,10 +35,10 @@ public class MainActivity extends AppCompatActivity {
         startApp = findViewById(R.id.tv_start_app);
         backGround = findViewById(R.id.imageView);
 
-        Glide.with(this).load("https://source.unsplash.com/random/?nature,water")
-                .fallback(R.drawable.relaxation)
+        Glide.with(this).load(RANDOM_PIC_URL)
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .placeholder(R.drawable.relaxation)
+                .placeholder(R.drawable.day)
+                .fallback(R.drawable.day)
                 .transition(DrawableTransitionOptions.withCrossFade(600))
                 .into(backGround);
 

@@ -35,4 +35,39 @@ public class SharedPrefsManager {
     public boolean getIsOffline() {
         return sharedPreferences.getBoolean("isOffline", false);
     }
+
+    public void setCurrentCategory(String category) {
+        sharedPreferences.edit().putString("_current_category", category).commit();
+    }
+
+
+    public void setAudioFileUriOrUrl(String uri_url) {
+        sharedPreferences.edit().putString("uri_url", uri_url).commit();
+    }
+
+    public void setCurrentAudioName(String name) {
+        sharedPreferences.edit().putString("_audio_name", name).commit();
+    }
+
+    public String getCurrentAudioName() {
+        return AppUtils.removeFileExtensionFromString(sharedPreferences.getString("_audio_name", "none"));
+    }
+
+    public void setIsAudioStreaming(Boolean isStreaming) {
+        sharedPreferences.edit().putBoolean("isStreaming", isStreaming).commit();
+    }
+
+
+    public String getCurrentCategory() {
+        return sharedPreferences.getString("_current_category", "none");
+    }
+
+    public void setCurrentPosition(int position) {
+        sharedPreferences.edit().putInt("current_position", position).commit();
+    }
+
+    public int getCurrnentPosition() {
+        return sharedPreferences.getInt("current_position", 0);
+    }
+
 }

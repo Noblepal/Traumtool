@@ -56,6 +56,14 @@
                     android:textColor="@color/black"
                     android:textSize="16sp" />
 
+                <ImageView
+                    android:id="@+id/img_visualizr"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentBottom="true"
+                    android:src="@drawable/ic_visualizr"
+                    android:visibility="gone" />
+
                 <ImageButton
                     android:id="@+id/img_play_from_list"
                     android:layout_width="wrap_content"
