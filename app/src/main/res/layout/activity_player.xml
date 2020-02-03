@@ -60,6 +60,7 @@
             android:singleLine="true"
             android:textColor="@color/white"
             android:textSize="21sp"
+            android:visibility="invisible"
             tools:text="Piano" />
 
         <TextView
@@ -71,6 +72,7 @@
             android:fontFamily="@font/product_sans_bold"
             android:textColor="@color/white"
             android:textSize="16sp"
+            android:visibility="invisible"
             tools:text="00:00" />
 
 
@@ -241,6 +243,7 @@
         android:text="Relaxing Music"
         android:textColor="@color/black"
         android:textSize="17sp"
+        android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/materialCardView" />
 
     <androidx.core.widget.NestedScrollView

@@ -167,9 +167,9 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         goOnlineSwitch = findViewById(R.id.switch_go_online);
         goOnlineSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                hideView(noOfflineFiles);
-                retrieveAudioFiles();
-                SharedPrefsManager.getInstance(PlayerActivity.this).toggleOfflineMode(true);
+//                hideView(noOfflineFiles);
+//                retrieveAudioFiles();
+//                SharedPrefsManager.getInstance(PlayerActivity.this).toggleOfflineMode(true);
             }
         });
         backButton.setOnClickListener(v -> onBackPressed());
@@ -260,12 +260,17 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                 offlineFiles.add(music);
             }
         }
-        populateRecyclerView(offlineFiles);
+        if(files.length>0){
+
+            populateRecyclerView(offlineFiles);
+        }else{
+            Toast.makeText(this, "No offline files", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void populateRecyclerView(ArrayList<Music> musics) {
         if (isOfflineFromPrefs && musics.size() == 0) {
-            showView(noOfflineFiles);
+//            showView(noOfflineFiles);
         } else {
             hideView(noOfflineFiles);
         }

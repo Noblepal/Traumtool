@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
@@ -102,7 +103,11 @@ public class SelfReflectionActivity extends AppCompatActivity {
         buttonNextQuestion.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                displayNextQuestion(getNextFile());
+                if (tvQuestion.getText().toString().isEmpty()){
+
+                }else {
+                    displayNextQuestion(getNextFile());
+                }
             }
         });
 
@@ -144,7 +149,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
 
         int id = 0;
         for (File f : files) {
-            Log.d(TAG, "getFiles: " + f.getName());
+            Log.e(TAG, "getFiles: " + f.getName());
             if (f.getName() == "" || f.getName().isEmpty()) {
                 return;
             }
@@ -162,12 +167,20 @@ public class SelfReflectionActivity extends AppCompatActivity {
             }
         }
         lastid = id;
-        displayNextQuestion(getNextFile());
+        if (files.length>0){
+            displayNextQuestion(getNextFile());
+        }else {
+            Toast.makeText(this, "No questions offline", Toast.LENGTH_SHORT).show();
+            tvQuestion.setText("No questions offline");
+            buttonNextQuestion.setClickable(false);
+            Log.d(TAG, "getFiles: Is empty");
+
+        }
     }
 
     private File getNextFile() {
         Log.e(TAG, "getNextFile: SIZEEE::" + alreadyViewedQuestions.size());
-        if (alreadyViewedQuestions.size() > 0 && alreadyViewedQuestions.size() == offlineFiles.size()) {
+        if (alreadyViewedQuestions.size() > 0 && alreadyViewedQuestions.size() >0) {
             startActivity(new Intent(SelfReflectionActivity.this, CongratulationsActivity.class));
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         }
@@ -211,7 +224,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
         File mFile = new File(path, file.getFilename());
         //if (mFile.exists())
         //file.setFileUrl(String.valueOf(mFile));
-        Log.d(TAG, "isAvailableOffline: Offline file found: " + mFile);
+        Log.d(TAG, "isAvailableOffline: Offline file found: " + mFile.exists());
         return mFile.exists();
     }
 
@@ -225,15 +238,24 @@ public class SelfReflectionActivity extends AppCompatActivity {
                 }
                 //Toast.makeText(SelfReflectionActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
                 try {
-                    Log.d(TAG, "onResponse: " + response.body().getQuestions());
+                    Log.e(TAG, "onResponse: " + response.body().getQuestions());
                     questionArrayList.addAll(response.body().getQuestions());
                     Log.d(TAG, "onResponse: SIZE:: " + questionArrayList.size());
                     for (int C = 0; C < questionArrayList.size(); C++) {
                         if (!isAvailableOffline(questionArrayList.get(C))) {
                             downloadQuestion(questionArrayList.get(C));
+                            Log.e(TAG, "onResponse: online" );
+                        }else{
+                            Log.e(TAG, "onResponse: offline" );
                         }
                     }
-                    getFiles();
+                    final Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            getFiles();
+                        }
+                    }, 1900);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -263,7 +285,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
                             @Override
                             protected Void doInBackground(Void... voids) {
                                 if (response.body() != null) {
-                                    isDownloaded = writeResponseBodyToDisk(response.body());//Write downloaded file to disk
+                                    isDownloaded = writeResponseBodyToDisk(response.body(),q.getFilename());//Write downloaded file to disk
                                     Log.d(TAG, "doInBackground: 142 " + isDownloaded);
 
                                 } else {
@@ -299,13 +321,13 @@ public class SelfReflectionActivity extends AppCompatActivity {
                 });
     }
 
-    private boolean writeResponseBodyToDisk(ResponseBody body) {
+    private boolean writeResponseBodyToDisk(ResponseBody body, String aa) {
         try {
             File path = SelfReflectionActivity.this.getExternalFilesDir("Download/" + category + "/");
 
             InputStream inputStream = null;
             OutputStream outputStream = null;
-            questionFile = new File(path, question.getFilename());
+            questionFile = new File(path, aa);
 
             if (questionFile.exists()) {
                 isDownloaded = true;
