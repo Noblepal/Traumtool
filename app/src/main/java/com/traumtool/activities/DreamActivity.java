@@ -7,10 +7,12 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import com.traumtool.R;
@@ -66,6 +68,8 @@ public class DreamActivity extends AppCompatActivity {
             if (isOfflineFromPrefs) {
                 if (getFiles()) {
                     populateRecyclerView(offlineDreams);
+                } else {
+                    showCustomSnackBar("No Offline Files Found", false, null, -2);
                 }
             } else {
                 retrieveBooks();
@@ -86,9 +90,9 @@ public class DreamActivity extends AppCompatActivity {
                 }
                 Toast.makeText(DreamActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
                 try {
-                    if (getFiles()) {
-                        dreamArrayList.addAll(response.body().getDreams());
-                    }
+                    getFiles();
+                    dreamArrayList.addAll(response.body().getDreams());
+
                     checkIfFilesExist();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -101,6 +105,15 @@ public class DreamActivity extends AppCompatActivity {
                 Log.d(TAG, "onFailure: " + t.getMessage());
             }
         });
+    }
+
+    private void showCustomSnackBar(String message, boolean hasAction,
+                                    @Nullable String actionText, int LENGTH) {
+        Snackbar snackbar = Snackbar.make(progressBar, message, LENGTH);
+        if (hasAction) {
+            snackbar.setAction(actionText, v -> retrieveBooks());
+        }
+        snackbar.show();
     }
 
     private void checkIfFilesExist() {
@@ -157,7 +170,7 @@ public class DreamActivity extends AppCompatActivity {
                 offlineDreams.add(dream);
             }
         }
-        return true;
+        return offlineDreams.size() > 0;
     }
 
 

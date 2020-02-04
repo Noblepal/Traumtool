@@ -86,7 +86,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     AsyncTask<String, String, String> streamTask;
     private static final int PERMISSION_REQUEST = 100;
     final Handler handler = new Handler();
-    private boolean isFirstTimeLaunch = false;
+    private boolean isFirstTimeLaunch = true;
     int decrementCounter = 0;
 
     //For notifications
@@ -136,10 +136,11 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
             String action = intent.getAction();
             int primaryProgress = intent.getIntExtra("progress", 0);
             int secondaryProgress = intent.getIntExtra("sec_progress", 0);
+            resetLengthsFirst();
             mediaFileLength = intent.getIntExtra("dur", 0);
             audioDurationOverlay.setText(AppUtils.formatStringToTime(mediaFileLength));
             realTimeLength = mediaFileLength - (decrementCounter += 1000);
-            realTime.setText(formatStringToTime(realTimeLength));
+            realTime.setText(formatStringToTime(mediaFileLength));
             //  ... react to local broadcast message
 
             seekBar.setProgress(primaryProgress);
@@ -148,6 +149,14 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
             logThis(TAG, 2, "secondaryProgress: " + secondaryProgress);
         }
     };
+
+    private void resetLengthsFirst() {
+        if (isFirstTimeLaunch) {
+            realTimeLength = 0;
+            mediaFileLength = 0;
+            isFirstTimeLaunch = false;
+        }
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     private void findViews() {
@@ -260,10 +269,10 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                 offlineFiles.add(music);
             }
         }
-        if(files.length>0){
+        if (files.length > 0) {
 
             populateRecyclerView(offlineFiles);
-        }else{
+        } else {
             Toast.makeText(this, "No offline files", Toast.LENGTH_LONG).show();
         }
     }
@@ -538,7 +547,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                                     @Nullable String actionText, int LENGTH) {
         Snackbar snackbar = Snackbar.make(download, message, LENGTH);
         if (hasAction) {
-            snackbar.setAction(actionText, v -> startDownload(currentAudio));
+            snackbar.setAction(actionText, v -> retrieveAudioFiles());
         }
         snackbar.show();
     }

@@ -37,7 +37,7 @@ public class MainService extends Service {
     Intent broadCastIntent = null;
     private boolean streamAudio = false;
     private MediaPlayer audioPlayer = null;
-    private boolean isAudioPlaying = false;
+    private boolean isAudioPlaying = false, isNewSong = true;
     private Context context = null;
     NotificationCompat.Builder builder;
     NotificationManager manager;
@@ -77,7 +77,7 @@ public class MainService extends Service {
                     setStreamAudio(false);
                 }
                 initAudioPlayer();
-                showNotification();
+                //showNotification();
             } else if (intent.hasExtra("play_pause")) {
                 if (audioPlayer != null)
                     if (audioPlayer.isPlaying())
@@ -100,12 +100,12 @@ public class MainService extends Service {
     public void showNotification() {
         createNotificationChannel();
 
-        /*//start PlayerActivity on by Tapping notification
+        //start PlayerActivity on by Tapping notification
         Intent playPauseIntent = new Intent(context, MainService.class);
         playPauseIntent.putExtra("play_pause", "play_pause");
-        playPausePendingIntent = PendingIntent.getService(context, 0, playPauseIntent, PendingIntent.FLAG_ONE_SHOT);
+        playPausePendingIntent = PendingIntent.getService(context, 0, playPauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        //Click Play/Pause button to start pause/play audio
+       /* //Click Play/Pause button to start pause/play audio
         Intent nextIntent = new Intent(context, PlayerActivity.class);
         nextIntent.putExtra("play_pause", "play_pause");
         nextPendingIntent = PendingIntent.getService(context, 0, nextIntent, PendingIntent.FLAG_ONE_SHOT);*/
@@ -126,10 +126,7 @@ public class MainService extends Service {
         //start intent on notification tap (MainActivity)
         builder.setContentIntent(playPausePendingIntent);
 
-        //notification manager
-        NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
-        notificationManagerCompat.notify(NOTIFICATION_ID, builder.build());
-
+        updateNotification();
     }
 
     private String getCurrentAudioName() {
@@ -143,13 +140,16 @@ public class MainService extends Service {
     private void updateNotification() {
         //add action buttons to notification
         //icons will not displayed on Android 7 and above
-        /*if (isPlayerPlaying())
+        if (audioPlayer.isPlaying())
             builder.addAction(R.drawable.ic_pause, "Pause", playPausePendingIntent);
         else
             builder.addAction(R.drawable.ic_play, "Play", playPausePendingIntent);
 
-        builder.addAction(R.drawable.ic_skip_next_, "Next", nextPendingIntent);*/
+        //builder.addAction(R.drawable.ic_skip_next_, "Next", nextPendingIntent);
 
+        //notification manager
+        NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
+        notificationManagerCompat.notify(NOTIFICATION_ID, builder.build());
 
     }
 
@@ -215,10 +215,16 @@ public class MainService extends Service {
             //TODO: Change to already implemented setOnBufferingUpdateListener in this activity
             audioPlayer.setOnBufferingUpdateListener((mp, percent) -> {
                 Log.i("onBufferingUpdate", "" + percent);
-                bufferProgressPercent += percent;
+                if (isNewSong) {
+                    bufferProgressPercent = 0;
+                    isNewSong = false;
+                } else {
+                    bufferProgressPercent += percent;
+                }
             });
             audioPlayer.setOnPreparedListener(mp -> {
                 audioPlayer.start();
+                showNotification();
                 isAudioPlaying = true;
             });
             //TODO: Change to already implemented setOnCompletionListener in this activity
@@ -228,6 +234,7 @@ public class MainService extends Service {
 
 
             Log.i(TAG, "initAudioPlayer: time2:::" + audioPlayer.getDuration());
+            isNewSong = true;
             startAudioProgressUpdateThread();
 
         } catch (IOException ex) {
@@ -341,6 +348,7 @@ public class MainService extends Service {
                     if (audioPlayer.isPlaying())
                         sendPositionBroadcast(broadCastIntent);
 
+
                     Log.i(TAG, "run: new position:: " + audioPlayer.getCurrentPosition());
                     SharedPrefsManager.getInstance(context).setCurrentPosition(audioPlayer.getCurrentPosition());
                 }
@@ -409,7 +417,8 @@ public class MainService extends Service {
         return bufferProgressPercent;
     }
 
-    public void setSecondaryAudioProgressUpdateHandler(Handler secondaryAudioProgressUpdateHandler) {
+    public void setSecondaryAudioProgressUpdateHandler(Handler
+                                                               secondaryAudioProgressUpdateHandler) {
         this.secondaryAudioProgressUpdateHandler = secondaryAudioProgressUpdateHandler;
     }
 

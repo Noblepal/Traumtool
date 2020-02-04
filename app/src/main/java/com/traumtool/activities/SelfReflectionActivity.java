@@ -103,10 +103,11 @@ public class SelfReflectionActivity extends AppCompatActivity {
         buttonNextQuestion.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (tvQuestion.getText().toString().isEmpty()){
+                if (tvQuestion.getText().toString().isEmpty()) {
 
-                }else {
-                    displayNextQuestion(getNextFile());
+                } else {
+                    showCongratulationsMessage();
+                    new Handler().postDelayed(() -> displayNextQuestion(getNextFile()),1000);
                 }
             }
         });
@@ -167,9 +168,9 @@ public class SelfReflectionActivity extends AppCompatActivity {
             }
         }
         lastid = id;
-        if (files.length>0){
+        if (files.length > 0) {
             displayNextQuestion(getNextFile());
-        }else {
+        } else {
             Toast.makeText(this, "No questions offline", Toast.LENGTH_SHORT).show();
             tvQuestion.setText("No questions offline");
             buttonNextQuestion.setClickable(false);
@@ -180,9 +181,8 @@ public class SelfReflectionActivity extends AppCompatActivity {
 
     private File getNextFile() {
         Log.e(TAG, "getNextFile: SIZEEE::" + alreadyViewedQuestions.size());
-        if (alreadyViewedQuestions.size() > 0 && alreadyViewedQuestions.size() >0) {
-            startActivity(new Intent(SelfReflectionActivity.this, CongratulationsActivity.class));
-            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        if (alreadyViewedQuestions.size() > 0) {
+            //showCongratulationsMessage();
         }
         hideView(tvQuestion);
         File path = SelfReflectionActivity.this.getExternalFilesDir("Download/" + category);
@@ -219,6 +219,11 @@ public class SelfReflectionActivity extends AppCompatActivity {
 
     }
 
+    private void showCongratulationsMessage() {
+        startActivity(new Intent(SelfReflectionActivity.this, CongratulationsActivity.class));
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+    }
+
     private boolean isAvailableOffline(Question file) {
         File path = SelfReflectionActivity.this.getExternalFilesDir("Download/" + file.getCategory() + "/");
         File mFile = new File(path, file.getFilename());
@@ -244,9 +249,9 @@ public class SelfReflectionActivity extends AppCompatActivity {
                     for (int C = 0; C < questionArrayList.size(); C++) {
                         if (!isAvailableOffline(questionArrayList.get(C))) {
                             downloadQuestion(questionArrayList.get(C));
-                            Log.e(TAG, "onResponse: online" );
-                        }else{
-                            Log.e(TAG, "onResponse: offline" );
+                            Log.e(TAG, "onResponse: online");
+                        } else {
+                            Log.e(TAG, "onResponse: offline");
                         }
                     }
                     final Handler handler = new Handler();
@@ -285,7 +290,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
                             @Override
                             protected Void doInBackground(Void... voids) {
                                 if (response.body() != null) {
-                                    isDownloaded = writeResponseBodyToDisk(response.body(),q.getFilename());//Write downloaded file to disk
+                                    isDownloaded = writeResponseBodyToDisk(response.body(), q.getFilename());//Write downloaded file to disk
                                     Log.d(TAG, "doInBackground: 142 " + isDownloaded);
 
                                 } else {

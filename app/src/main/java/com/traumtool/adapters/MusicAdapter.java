@@ -60,6 +60,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
 
         if (currentMusic.isSelected()) {
             showView(holder.visualizer);
+            currentMusic.setSelected(false);
         } else {
             hideView(holder.visualizer);
         }

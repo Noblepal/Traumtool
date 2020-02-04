@@ -1,6 +1,7 @@
 package com.traumtool.activities;
 
 import android.os.Bundle;
+import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -28,13 +29,20 @@ public class CongratulationsActivity extends AppCompatActivity {
                 .transition(DrawableTransitionOptions.withCrossFade(600))
                 .into(backGround);
 
-        findViewById(R.id.imgBackCongratulations).setOnClickListener(v -> onBackPressed());
+        findViewById(R.id.imgBackCongratulations).setOnClickListener(v -> {
+            finish();
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        });
+
+        new Handler().postDelayed(() -> {
+            finish();
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        }, 2500);
 
     }
 
     @Override
     public void onBackPressed() {
-        finish();
-        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+        //Do nothing
     }
 }

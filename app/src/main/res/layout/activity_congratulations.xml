@@ -60,7 +60,7 @@
         android:layout_marginTop="28dp"
         android:fontFamily="@font/product_sans_regular"
         android:gravity="center"
-        android:text="You have finished self reflection"
+        android:text="Loading next question..."
         android:textColor="@color/white"
         android:textSize="28sp"
         app:layout_constraintBottom_toBottomOf="parent"
