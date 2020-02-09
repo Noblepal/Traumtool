@@ -28,6 +28,7 @@ import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -72,10 +73,10 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     Switch goOnlineSwitch;
     LinearLayout noOfflineFiles;
     private SeekBar seekBar;
-    private TextView realTime, audioName, audioNameOverlay, audioDurationOverlay, mainCategory;
+    private TextView realTime, audioName, mainCategory;
     private ProgressBar bufferProgressBar, downloadProgress, loadingProgressBar;
     private RecyclerView recyclerView;
-    private boolean isStreaming = false, isDownloaded = false, isOfflineFromPrefs;
+    private boolean isPlayerPlaying = false, isDownloaded = false, isOfflineFromPrefs;
     //private MediaPlayer mediaPlayer;
     private Music currentAudio;
     private int mediaFileLength = 0;
@@ -88,6 +89,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     final Handler handler = new Handler();
     private boolean isFirstTimeLaunch = true;
     int decrementCounter = 0;
+    int finalDestination = 0;
 
     //For notifications
     private static final String CHANNEL_ID = "channel_id01";
@@ -103,10 +105,23 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         try {
             category = getIntent().getStringExtra("category");
             //Set current category to sharedPrefs for retrieving from notification later
+
+            Log.e(TAG, "onCreate: Received category: " + category);
+            Log.e(TAG, "onCreate: Prefs category: " + SharedPrefsManager.getInstance(this).getCurrentCategory());
+
+            /*Check if received category is same as cached category*/
+            if (!category.equals(SharedPrefsManager.getInstance(this).getCurrentCategory())
+                    && SharedPrefsManager.getInstance(this).isBackGroundAudioPlaying()) {
+                //Cancel media player
+                showAlertDialog();
+            } else {
+                Log.i(TAG, "onCreate: Received same category");
+            }
+
             Log.d(TAG, "onCreate: category -> " + category);
             SharedPrefsManager.getInstance(getApplicationContext()).setCurrentCategory(category);
         } catch (Exception e) {
-            Log.d(TAG, "onCreate: I have not received any category title");
+            Log.d(TAG, "onCreate: not received any category title");
             e.printStackTrace();
         }
 
@@ -130,18 +145,43 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("Progress"));
     }
 
+    private void showAlertDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Stop playing audio?");
+        builder.setMessage("Do you want to stop current playing audio?");
+        builder.setPositiveButton("Yes", (dialog, which) -> {
+            Intent cancelIntent = new Intent(this, MainService.class);
+            cancelIntent.putExtra("action", "stop");
+            startService(cancelIntent);
+        });
+
+        builder.setNegativeButton("No", (dialog, which) -> {
+            dialog.dismiss();
+            onBackPressed();
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+            isPlayerPlaying = intent.getBooleanExtra("isPlaying", false);
             int primaryProgress = intent.getIntExtra("progress", 0);
             int secondaryProgress = intent.getIntExtra("sec_progress", 0);
             resetLengthsFirst();
             mediaFileLength = intent.getIntExtra("dur", 0);
-            audioDurationOverlay.setText(AppUtils.formatStringToTime(mediaFileLength));
             realTimeLength = mediaFileLength - (decrementCounter += 1000);
             realTime.setText(formatStringToTime(mediaFileLength));
             //  ... react to local broadcast message
+
+
+            if (primaryProgress == 100) {
+                logThis(TAG, 0, "temp: " + finalDestination);
+                logThis(TAG, 0, "final: " + primaryProgress);
+                play_pause.setChecked(true);
+            }
 
             seekBar.setProgress(primaryProgress);
             logThis(TAG, 3, "primaryProgress: " + primaryProgress);
@@ -170,7 +210,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         realTime = findViewById(R.id.tvRealTime);
         download = findViewById(R.id.img_download);
         mainCategory = findViewById(R.id.tvCategoryTitle);
-        mainCategory.setText(AppUtils.capitalizeEachWord(category));
+        //mainCategory.setText(AppUtils.capitalizeEachWord(category));
         backButton = findViewById(R.id.imgBackPlayer);
         noOfflineFiles = findViewById(R.id.ll_no_offline_files);
         goOnlineSwitch = findViewById(R.id.switch_go_online);
@@ -186,12 +226,12 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         play_pause.setOnClickListener(this);
 
         audioName = findViewById(R.id.tvAudioName);
-        audioNameOverlay = findViewById(R.id.tvAudioNameOverlay);
-        audioDurationOverlay = findViewById(R.id.tvAudioDurationOverlay);
 
         seekBar = findViewById(R.id.seek_bar);
         seekBar.setMax(99);//100% (0 - 99)
         seekBar.setOnTouchListener((v, event) -> true);
+        forward.setOnClickListener(this);
+        rewind.setOnClickListener(this);
     }
 
     private void initializeStuff() {
@@ -202,7 +242,6 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                 .transition(DrawableTransitionOptions.withCrossFade(600))
                 .placeholder(R.drawable.self_reflection)
                 .into(topImage);
-
     }
 
     //Download audio list from server
@@ -228,14 +267,14 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                             loadFirstAudioFile(musicArrayList);
                             //loadFileIntoPlayer(musicArrayList.get(0));//Load first audio file into player
                         } else {
-                            showCustomSnackBar("Failed to get data", true, "Try Again", -2);
+                            showCustomSnackBar("Failed to get data. Possibly due to network error", true, "Retry", -2);
                         }
                     }
 
                     @Override
                     public void onFailure(Call<FileResponse> call, Throwable t) {
                         hideView(loadingProgressBar);
-                        showCustomSnackBar("Failed to get data. Possibly due to network error", true, "Try Again", -2);
+                        showCustomSnackBar("Failed to get data. Possibly due to network error", true, "Retry", -2);
                         Log.d(TAG, "onFailure: " + t.getMessage());
                     }
                 });
@@ -273,7 +312,8 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
 
             populateRecyclerView(offlineFiles);
         } else {
-            Toast.makeText(this, "No offline files", Toast.LENGTH_LONG).show();
+            //Toast.makeText(this, "No offline files", Toast.LENGTH_LONG).show();
+            showCustomSnackBar("No offline files", false, null, -2);
         }
     }
 
@@ -321,7 +361,6 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     /*Can be used by background service to load file into player...*/
     private void loadFileIntoPlayer(Music audio) {
         audioName.setText(AppUtils.removeFileExtensionFromString(audio.getFilename()));
-        audioNameOverlay.setText(AppUtils.removeFileExtensionFromString(audio.getFilename()));
         Log.d(TAG, "loadFileIntoPlayer: url: " + audio.getFileUrl());
         Log.d(TAG, "loadFileIntoPlayer: Audio: " + audio.getFilename());
         if (isOfflineFromPrefs) {
@@ -338,8 +377,6 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     private void playSelectedAudio(Music audio) {
         play_pause.setChecked(false);
         audioName.setText(AppUtils.removeFileExtensionFromString(audio.getFilename()));
-        audioNameOverlay.setText(AppUtils.removeFileExtensionFromString(audio.getFilename()));
-        //audioDurationOverlay.setText(AppUtils.formatStringToTime(.getTotalAudioDuration()));
 
         Intent intent = new Intent(PlayerActivity.this, MainService.class);
         if (isAvailableOffline(audio)) {
@@ -462,8 +499,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                     c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS)));
             Log.d(getClass().getName(), "COLUMN_REASON: " +
                     c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON)));
-
-            Toast.makeText(this, statusMessage(c), Toast.LENGTH_LONG).show();
+            showCustomSnackBar(statusMessage(c), false, null, 0);
         }
     }
 
@@ -583,17 +619,41 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
 
             intent.putExtra("play_pause", "play_pause");
             startService(intent);
+        } else if (v == forward) {
+            //int currentSongIndex = currentAudio.getId();
+            //if (currentSongIndex < musicArrayList.size() - 1) {
+            Intent intent = new Intent(PlayerActivity.this, MainService.class);
+            intent.putExtra("action", "forward");
+            startService(intent);
+            //} else {
+            // showCustomSnackBar("Cannot forward", false, null, 0);
+            //}
+        } else if (v == rewind) {
+            //int currentSongIndex = currentAudio.getId();
+            //if (currentSongIndex > 0) {
+            Intent intent = new Intent(PlayerActivity.this, MainService.class);
+            intent.putExtra("action", "rewind");
+            startService(intent);
+            //} else {
+            //showCustomSnackBar("Cannot rewind", false, null, 0);
+            //}
         }
     }
 
     @Override
     protected void onResume() {
-        if (SharedPrefsManager.getInstance(getApplicationContext()).isBackGroundAudioPlaying()) {
-            seekBar.setProgress(SharedPrefsManager.getInstance(this).getCurrnentPosition());
-            audioName.setText(SharedPrefsManager.getInstance(this).getCurrentAudioName());
-            audioNameOverlay.setText(SharedPrefsManager.getInstance(this).getCurrentAudioName());
-
-
+        try {
+            if (category.equals(SharedPrefsManager.getInstance(this).getCurrentCategory())) {
+                if (SharedPrefsManager.getInstance(this).isBackGroundAudioPlaying())
+                    seekBar.setProgress(SharedPrefsManager.getInstance(this).getCurrentPosition());
+                audioName.setText(SharedPrefsManager.getInstance(this).getCurrentAudioName());
+                //play_pause.setChecked(false);
+            } else {
+                seekBar.setProgress(0);
+                //play_pause.setChecked(true);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "onResume: Caught:: " + e.getLocalizedMessage());
         }
         super.onResume();
     }

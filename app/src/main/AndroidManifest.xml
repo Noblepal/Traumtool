@@ -34,10 +34,6 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name=".services.AudioService"
-            android:enabled="true"
-            android:exported="true" />
         <service android:name=".services.MainService" />
     </application>
 

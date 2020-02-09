@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -12,6 +13,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.android.material.snackbar.Snackbar;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
@@ -42,6 +46,7 @@ public class DreamActivity extends AppCompatActivity {
     private boolean isOfflineFromPrefs;
     private String category;
     private ImageButton backButton;
+    private ImageView topImage;
     private RecyclerView recyclerView;
     private String pdfText = "";
     private ProgressBar progressBar;
@@ -53,7 +58,6 @@ public class DreamActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTheme(R.style.FullscreenTheme);
         setContentView(R.layout.activity_dream);
 
         //Get online / offline boolean from shared preferences
@@ -69,7 +73,8 @@ public class DreamActivity extends AppCompatActivity {
                 if (getFiles()) {
                     populateRecyclerView(offlineDreams);
                 } else {
-                    showCustomSnackBar("No Offline Files Found", false, null, -2);
+                    showCustomSnackBar("No offline files found", false, null, -2);
+                    hideView(progressBar);
                 }
             } else {
                 retrieveBooks();
@@ -102,7 +107,7 @@ public class DreamActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<DreamFileResponse> call, Throwable t) {
                 hideView(progressBar);
-                Log.d(TAG, "onFailure: " + t.getMessage());
+                showCustomSnackBar("Failed to get data. Possibly due to network error", true, "Retry", -2);
             }
         });
     }
@@ -153,8 +158,9 @@ public class DreamActivity extends AppCompatActivity {
         int id = 0;
         for (File f : files) {
             Log.d(TAG, "getFiles: " + f.getName());
-            if (f.getName() == "" || f.getName().isEmpty()) {
-                return false;
+            if (f.getName().equals("") || f.getName().isEmpty()) {
+                break;
+                //return false;
             }
 
             String words = getWordCount(f);
@@ -210,6 +216,15 @@ public class DreamActivity extends AppCompatActivity {
         recyclerView.setHasFixedSize(false);
         backButton = findViewById(R.id.imgBackDream);
         backButton.setOnClickListener(v -> onBackPressed());
+        topImage = findViewById(R.id.imageView3);
+
+        Glide.with(this).load("https://source.unsplash.com/random/?nature,water")
+                .fallback(R.drawable.day)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .transition(DrawableTransitionOptions.withCrossFade(600))
+                .placeholder(R.drawable.day)
+                .into(topImage);
+
     }
 
     private void populateRecyclerView(ArrayList<Dream> dreams) {

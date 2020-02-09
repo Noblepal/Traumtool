@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/rootView"
     tools:context=".activities.CongratulationsActivity">
 
     <ImageButton
@@ -12,7 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_margin="16dp"
-        android:background="@drawable/circle_button_bg_grey"
+        android:background="@color/transparent"
         android:elevation="1dp"
         android:src="@drawable/ic_arrow_back"
         app:layout_constraintStart_toStartOf="parent"
@@ -60,7 +61,6 @@
         android:layout_marginTop="28dp"
         android:fontFamily="@font/product_sans_regular"
         android:gravity="center"
-        android:text="Loading next question..."
         android:textColor="@color/white"
         android:textSize="28sp"
         app:layout_constraintBottom_toBottomOf="parent"

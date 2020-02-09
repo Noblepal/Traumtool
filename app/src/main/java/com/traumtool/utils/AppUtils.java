@@ -17,10 +17,6 @@ public class AppUtils {
         return RetrofitClient.getClient(BASE_URL).create(ApiService.class);
     }
 
-    /*public static ApiService getApisDownloadService() {
-        return RetrofitClient.getClientDownload(BASE_URL).create(ApiService.class);
-    }*/
-
     public static String formatStringToTime(int raw) {
         return String.format(US, "%02d:%02d", TimeUnit.MILLISECONDS.toMinutes(raw),
                 TimeUnit.MILLISECONDS.toSeconds(raw) - ((TimeUnit.MILLISECONDS.toMinutes(raw)) * 60));
@@ -31,7 +27,9 @@ public class AppUtils {
     }
 
     public static String removeFileExtensionFromString(String data) {
-        return data.substring(0, data.lastIndexOf("."));
+        return !data.equals("")
+                ? data.substring(0, data.lastIndexOf("."))
+                : "";
     }
 
     public static void showView(View v) {

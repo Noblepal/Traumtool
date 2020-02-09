@@ -27,7 +27,8 @@
                 android:layout_marginEnd="16dp"
                 android:layout_marginRight="16dp"
                 android:background="@color/transparent"
-                android:src="@drawable/ic_arrow_back" />
+                android:src="@drawable/ic_arrow_back"
+                android:tint="@color/black" />
 
             <ImageView
                 android:id="@+id/tvAppTitle"
@@ -67,26 +68,212 @@
 
     </androidx.appcompat.widget.Toolbar>
 
-    <com.traumtool.libs.GridRecyclerView
-        android:id="@+id/recyclerViewCategories"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:layoutAnimation="@anim/grid_layout_animation_from_bottom"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/categoryToolBar"
-        tools:listitem="@layout/item_category" />
+        app:layout_constraintTop_toBottomOf="@id/categoryToolBar">
 
-    <TextView
-        android:id="@+id/tvLink"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:fontFamily="@font/product_sans_bold"
-        android:text="@string/link"
-        android:textColor="@color/colorAccent"
-        android:textSize="22sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cvCategoryRelaxation"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="8dp"
+            android:transitionGroup="true"
+            app:cardCornerRadius="12dp"
+            app:cardPreventCornerOverlap="false"
+            app:layout_constraintBottom_toTopOf="@id/cvCategoryMeditation"
+            app:layout_constraintEnd_toStartOf="@id/cvCategoryDreamTrips"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/imageViewCategoryRelaxation"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/relaxation" />
+
+            <TextView
+                android:id="@+id/tvCategoryRelaxation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:background="@color/translucent_glass"
+                android:fontFamily="@font/product_sans_bold"
+                android:padding="8dp"
+                android:text="Relaxation"
+                android:textColor="@color/white"
+                android:textSize="24sp" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cvCategoryDreamTrips"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="8dp"
+            android:transitionGroup="true"
+            app:cardCornerRadius="12dp"
+            app:cardPreventCornerOverlap="false"
+            app:layout_constraintBottom_toTopOf="@id/cvCategorySelfReflection"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/cvCategoryRelaxation"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/imageViewCategoryDreamTrips"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/dream_trip" />
+
+            <TextView
+                android:id="@+id/tvCategoryDreamTrips"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:background="@color/translucent_glass"
+                android:fontFamily="@font/product_sans_bold"
+                android:padding="8dp"
+                android:text="Dream Trips"
+                android:textColor="@color/white"
+                android:textSize="24sp" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cvCategoryMeditation"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="8dp"
+            android:transitionGroup="true"
+            app:cardCornerRadius="12dp"
+            app:cardPreventCornerOverlap="false"
+            app:layout_constraintBottom_toTopOf="@id/cvCategoryMuscleRelaxation"
+            app:layout_constraintEnd_toStartOf="@id/cvCategoryDreamTrips"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cvCategoryRelaxation">
+
+            <ImageView
+                android:id="@+id/imageViewCategoryMeditation"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/meditation" />
+
+            <TextView
+                android:id="@+id/tvCategoryMeditation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:background="@color/translucent_glass"
+                android:fontFamily="@font/product_sans_bold"
+                android:padding="8dp"
+                android:text="Meditation"
+                android:textColor="@color/white"
+                android:textSize="24sp" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cvCategorySelfReflection"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="8dp"
+            android:transitionGroup="true"
+            app:cardCornerRadius="12dp"
+            app:cardPreventCornerOverlap="false"
+            app:layout_constraintBottom_toTopOf="@id/imprint"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/cvCategoryMeditation"
+            app:layout_constraintTop_toBottomOf="@id/cvCategoryDreamTrips">
+
+            <ImageView
+                android:id="@+id/imageViewCategorySelfReflection"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/self_reflection" />
+
+            <TextView
+                android:id="@+id/tvCategorySelfReflection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:background="@color/translucent_glass"
+                android:fontFamily="@font/product_sans_bold"
+                android:padding="8dp"
+                android:text="Self Reflection"
+                android:textColor="@color/white"
+                android:textSize="24sp" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cvCategoryMuscleRelaxation"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="8dp"
+            android:transitionGroup="true"
+            app:cardCornerRadius="12dp"
+            app:cardPreventCornerOverlap="false"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/imprint"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cvCategoryMeditation">
+
+            <ImageView
+                android:id="@+id/imageViewCategoryMuscleRelaxation"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/muscle_meditation" />
+
+            <TextView
+                android:id="@+id/tvCategoryMuscleRelaxation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:background="@color/translucent_glass"
+                android:fontFamily="@font/product_sans_bold"
+                android:padding="8dp"
+                android:text="Muscle Relaxation"
+                android:textColor="@color/white"
+                android:textSize="24sp" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/imprint"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="8dp"
+            android:background="@color/transparent"
+            android:transitionGroup="true"
+            app:cardCornerRadius="12dp"
+            app:cardPreventCornerOverlap="false"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/cvCategoryMuscleRelaxation"
+            app:layout_constraintTop_toBottomOf="@id/cvCategorySelfReflection">
+
+            <TextView
+                android:id="@+id/tvLink"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="16dp"
+                android:fontFamily="@font/product_sans_bold"
+                android:text="@string/link"
+                android:textColor="@color/colorAccent"
+                android:textSize="22sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

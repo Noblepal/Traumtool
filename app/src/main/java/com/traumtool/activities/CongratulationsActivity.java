@@ -1,7 +1,8 @@
 package com.traumtool.activities;
 
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -15,12 +16,19 @@ import static com.traumtool.utils.AppUtils.RANDOM_PIC_URL;
 
 public class CongratulationsActivity extends AppCompatActivity {
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_congratulations);
 
         KenBurnsView backGround = findViewById(R.id.imageViewKB);
+
+        findViewById(R.id.rootView).setOnTouchListener((v, event) -> {
+            startActivity(new Intent(CongratulationsActivity.this, CategoryActivity.class));
+            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
+            return true;
+        });
 
         Glide.with(this).load(RANDOM_PIC_URL)
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
@@ -30,19 +38,14 @@ public class CongratulationsActivity extends AppCompatActivity {
                 .into(backGround);
 
         findViewById(R.id.imgBackCongratulations).setOnClickListener(v -> {
-            finish();
+            startActivity(new Intent(CongratulationsActivity.this, CategoryActivity.class));
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
-
-        new Handler().postDelayed(() -> {
-            finish();
-            overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
-        }, 2500);
-
     }
 
     @Override
     public void onBackPressed() {
-        //Do nothing
+        startActivity(new Intent(CongratulationsActivity.this, CategoryActivity.class));
+        overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 }

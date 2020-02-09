@@ -84,8 +84,23 @@ public class MainService extends Service {
                         pauseAudio();
                     else
                         continuePlayback();
-            } else if (intent.hasExtra("dur")) {
-
+            } else if (intent.hasExtra("action")) {
+                switch (intent.getStringExtra("action")) {
+                    case "forward":
+                        logThis(TAG, 0, "forwarding...");
+                        forwardAudio();
+                        break;
+                    case "rewind":
+                        logThis(TAG, 0, "rewinding...");
+                        rewindAudio();
+                        break;
+                    case "stop":
+                        logThis(TAG, 1, "Stopping media player, reason: Received category and current category do not match");
+                        stopAudio();
+                        break;
+                }
+            } else if (intent.hasExtra("request")) {
+                isPlayerPlaying();
             } else {
                 Log.i(TAG, "onStartCommand: No extra");
             }
@@ -223,12 +238,14 @@ public class MainService extends Service {
                 }
             });
             audioPlayer.setOnPreparedListener(mp -> {
-                audioPlayer.start();
+                startAudio();
                 showNotification();
                 isAudioPlaying = true;
             });
             //TODO: Change to already implemented setOnCompletionListener in this activity
-            audioPlayer.setOnCompletionListener(mp -> Log.i("onCompletion", "Yes"));
+            audioPlayer.setOnCompletionListener(mp -> {
+                //stopAudio();
+            });
             //TODO: Also remove this - not used at all
             audioPlayer.setOnInfoListener((mp, what, extra) -> false);
 
@@ -288,7 +305,7 @@ public class MainService extends Service {
 
     // Start play audio.
     public void startAudio() {
-        initAudioPlayer();
+        //initAudioPlayer();
         if (audioPlayer != null) {
             audioPlayer.start();
             isAudioPlaying = true;
@@ -321,7 +338,51 @@ public class MainService extends Service {
             audioPlayer.reset();
             logThis(TAG, 0, "Resetting audio player");
             SharedPrefsManager.getInstance(context).setIsBackgroundAudioPlaying(false);
-            //destroyAudioPlayer();
+            SharedPrefsManager.getInstance(context).setCurrentPosition(audioPlayer.getCurrentPosition());
+            /*Delete variables from local storage*/
+            //SharedPrefsManager.getInstance(context).clearEverything();
+            clearNotification();
+        }
+    }
+
+    private void clearNotification() {
+        NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
+        notificationManagerCompat.cancel(NOTIFICATION_ID);
+
+        try {
+            manager.cancelAll();
+        } catch (Exception e) {
+            Log.i(TAG, "clearNotification: Notification not running");
+        }
+    }
+
+    public void forwardAudio() {
+        if (audioPlayer != null) {
+            if (audioPlayer.isPlaying()) {
+                int current_position = audioPlayer.getCurrentPosition();
+                current_position += 5000;
+                if (current_position >= audioPlayer.getDuration()) {
+                    logThis(TAG, 1, "Cannot forward anymore");
+                } else {
+                    audioPlayer.seekTo(current_position);
+                }
+
+            }
+        }
+    }
+
+    public void rewindAudio() {
+        if (audioPlayer != null) {
+            if (audioPlayer.isPlaying()) {
+                int current_position = audioPlayer.getCurrentPosition();
+                current_position -= 5000;
+                if (current_position <= 0) {
+                    logThis(TAG, 1, "Cannot rewind anymore");
+                } else {
+                    audioPlayer.seekTo(current_position);
+                }
+            }
+
         }
     }
 
@@ -434,9 +495,13 @@ public class MainService extends Service {
 
     @Override
     public void onDestroy() {
+        Log.e(TAG, "onDestroy: Called");
         mTimer.cancel();
         stopForeground(true);
         manager.cancelAll();
         destroyAudioPlayer();
+
+        /*Delete variables from local storage*/
+        SharedPrefsManager.getInstance(context).clearEverything();
     }
 }

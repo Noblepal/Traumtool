@@ -19,6 +19,7 @@
         android:singleLine="true"
         android:textColor="@color/black"
         android:textSize="28sp"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/imgBackReadDream"
         app:layout_constraintTop_toTopOf="parent"
@@ -57,8 +58,9 @@
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_margin="8dp"
-        android:background="@drawable/circle_button_bg_grey"
+        android:background="@color/transparent"
         android:src="@drawable/ic_arrow_back"
+        android:tint="@color/black"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

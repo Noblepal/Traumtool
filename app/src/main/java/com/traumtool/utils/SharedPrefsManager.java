@@ -25,7 +25,7 @@ public class SharedPrefsManager {
     }
 
     public void setIsBackgroundAudioPlaying(boolean isAudioPlaying) {
-        sharedPreferences.edit().putBoolean("isBackGroundPlayerPlaying", isAudioPlaying).apply();
+        sharedPreferences.edit().putBoolean("isBackGroundPlayerPlaying", isAudioPlaying).commit();
     }
 
     public boolean isBackGroundAudioPlaying() {
@@ -40,6 +40,15 @@ public class SharedPrefsManager {
         sharedPreferences.edit().putString("_current_category", category).commit();
     }
 
+    public void clearEverything() {
+        sharedPreferences.edit().remove("_current_category").apply();
+        sharedPreferences.edit().remove("isBackGroundPlayerPlaying").apply();
+        sharedPreferences.edit().remove("uri_url").apply();
+        sharedPreferences.edit().remove("_audio_name").apply();
+        sharedPreferences.edit().remove("isStreaming").apply();
+        sharedPreferences.edit().remove("current_position").apply();
+    }
+
 
     public void setAudioFileUriOrUrl(String uri_url) {
         sharedPreferences.edit().putString("uri_url", uri_url).commit();
@@ -50,7 +59,9 @@ public class SharedPrefsManager {
     }
 
     public String getCurrentAudioName() {
-        return AppUtils.removeFileExtensionFromString(sharedPreferences.getString("_audio_name", "none"));
+        return !sharedPreferences.getString("_audio_name", "none").equals("")
+                ? AppUtils.removeFileExtensionFromString(sharedPreferences.getString("_audio_name", "none"))
+                : "";
     }
 
     public void setIsAudioStreaming(Boolean isStreaming) {
@@ -66,7 +77,7 @@ public class SharedPrefsManager {
         sharedPreferences.edit().putInt("current_position", position).commit();
     }
 
-    public int getCurrnentPosition() {
+    public int getCurrentPosition() {
         return sharedPreferences.getInt("current_position", 0);
     }
 

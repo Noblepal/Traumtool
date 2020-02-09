@@ -4,10 +4,6 @@
         <a href="https://traumtool.de/impressum.html">Imprint</a>
     </string>
 
-    <string name="title_activity_fullscreen">FullscreenActivity</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="offline">Offline</string>
     <string name="online">Online</string>
-    <integer name="anim_duration_long"></integer>
 </resources>

@@ -107,7 +107,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
 
                 } else {
                     showCongratulationsMessage();
-                    new Handler().postDelayed(() -> displayNextQuestion(getNextFile()),1000);
+                    new Handler().postDelayed(() -> displayNextQuestion(getNextFile()), 1000);
                 }
             }
         });
@@ -118,6 +118,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
      * Display next random question from text files
      */
     private void displayNextQuestion(File question) {
+        showView(downloadTextFileProgress);
         if (question == null) {
             tvQuestion.setText("");
             return;
@@ -138,9 +139,11 @@ public class SelfReflectionActivity extends AppCompatActivity {
         }
         Log.d(TAG, "displayNextQuestion: " + text.toString());
         tvQuestion.setText(text.toString());
+        hideView(downloadTextFileProgress);
     }
 
     private void getFiles() {
+        showView(downloadTextFileProgress);
         File path = SelfReflectionActivity.this.getExternalFilesDir("Download/" + category);
         String uri = String.valueOf(path);
         File file = new File(uri);
@@ -169,10 +172,13 @@ public class SelfReflectionActivity extends AppCompatActivity {
         }
         lastid = id;
         if (files.length > 0) {
+            hideView(downloadTextFileProgress);
             displayNextQuestion(getNextFile());
         } else {
-            Toast.makeText(this, "No questions offline", Toast.LENGTH_SHORT).show();
-            tvQuestion.setText("No questions offline");
+            showCustomSnackBar("No offline questions", false, null, -2);
+            //Toast.makeText(this, "No offline questions ", Toast.LENGTH_SHORT).show();
+            tvQuestion.setText("No offline questions");
+            hideView(downloadTextFileProgress);
             buttonNextQuestion.setClickable(false);
             Log.d(TAG, "getFiles: Is empty");
 
@@ -234,10 +240,12 @@ public class SelfReflectionActivity extends AppCompatActivity {
     }
 
     private void retrieveQuestionList() {
+        showView(downloadTextFileProgress);
         ApiService service = AppUtils.getApiService();
         service.getQuestionFileList("self_reflection").enqueue(new Callback<QuestionFileResponse>() {
             @Override
             public void onResponse(Call<QuestionFileResponse> call, Response<QuestionFileResponse> response) {
+                hideView(downloadTextFileProgress);
                 if (response.body().getError()) {
                     Toast.makeText(SelfReflectionActivity.this, "Error: " + response.body().getMessage(), Toast.LENGTH_SHORT).show();
                 }
@@ -268,13 +276,15 @@ public class SelfReflectionActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<QuestionFileResponse> call, Throwable t) {
-                showCustomSnackBar("Failed to get data. Possibly due to network error", true, "Try Again", -2);
+                hideView(downloadTextFileProgress);
+                showCustomSnackBar("Failed to get data. Possibly due to network error", true, "Retry", -2);
                 Log.d(TAG, "onFailure: " + t.getMessage());
             }
         });
     }
 
     private void downloadQuestion(Question q) {
+        showView(downloadTextFileProgress);
         question = q;
         Log.d(TAG, "downloadQuestion: ::" + question.toString());
         showView(downloadTextFileProgress);
@@ -307,12 +317,6 @@ public class SelfReflectionActivity extends AppCompatActivity {
                                 else {
                                     Log.d(TAG, "onPostExecute: Error: line 170");
                                 }
-
-//                                try {
-//                                    displayNextQuestion(questionFile);
-//                                } catch (Exception e) {
-//                                    e.printStackTrace();
-//                                }
                             }
                         }.execute();
                     }
@@ -327,6 +331,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
     }
 
     private boolean writeResponseBodyToDisk(ResponseBody body, String aa) {
+        showView(downloadTextFileProgress);
         try {
             File path = SelfReflectionActivity.this.getExternalFilesDir("Download/" + category + "/");
 
@@ -363,11 +368,12 @@ public class SelfReflectionActivity extends AppCompatActivity {
                 }
 
                 outputStream.flush();
-
+                hideView(downloadTextFileProgress);
                 return true;
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.d(TAG, "writeResponseBodyToDisk: 190 " + e.getLocalizedMessage());
+                hideView(downloadTextFileProgress);
                 return false;
             } finally {
                 if (inputStream != null) {
@@ -381,12 +387,17 @@ public class SelfReflectionActivity extends AppCompatActivity {
         } catch (IOException e) {
             Log.d(TAG, "writeResponseBodyToDisk: 248 " + e.getLocalizedMessage());
             e.printStackTrace();
+            hideView(downloadTextFileProgress);
             return false;
         }
     }
 
-    private void showCustomSnackBar(String message, boolean hasAction, @Nullable String actionText, int LENGTH) {
-        Snackbar snackbar = Snackbar.make(tvQuestion, message, Snackbar.LENGTH_LONG);
+    private void showCustomSnackBar(String message, boolean hasAction,
+                                    @Nullable String actionText, int LENGTH) {
+        Snackbar snackbar = Snackbar.make(tvQuestion, message, LENGTH);
+        if (hasAction) {
+            snackbar.setAction(actionText, v -> retrieveQuestionList());
+        }
         snackbar.show();
     }
 

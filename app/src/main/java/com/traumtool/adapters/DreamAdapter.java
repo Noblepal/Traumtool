@@ -52,9 +52,13 @@ public class DreamAdapter extends RecyclerView.Adapter<DreamAdapter.MusicViewHol
         String author = currentDream.getAuthor() != null ? "by " + currentDream.getAuthor() : "Unknown author";
         holder.author.setText(author);
         Random randWords = new Random();
-        String words = currentDream.getWords() != null ? currentDream.getWords() + " words" : randWords.nextInt(503) + " words";
+        int rand;
+        do {
+            rand = randWords.nextInt(972);
+        } while (rand < 318);
+        String words = currentDream.getWords() != null ? currentDream.getWords() + " words" : rand + " words";
         holder.words.setText(words);
-        holder.image.setImageResource(R.drawable.ic_dreamicon);
+        holder.image.setImageResource(R.drawable.ic_document);
 
         if (currentDream.getWords() != null) {
             holder.imagePlay.setImageResource(R.drawable.ic_check_circle);
