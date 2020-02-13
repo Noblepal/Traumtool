@@ -137,12 +137,13 @@
 
                     <TextView
                         android:id="@+id/tvRealTime"
-                        android:layout_width="wrap_content"
+                        android:layout_width="50dp"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:layout_alignParentRight="true"
                         android:layout_centerVertical="true"
                         android:fontFamily="@font/product_sans_regular"
+                        android:gravity="center"
                         android:text="00:00"
                         android:textSize="16sp" />
                 </RelativeLayout>
@@ -258,49 +259,6 @@
             android:descendantFocusability="blocksDescendants"
             android:orientation="vertical">
 
-            <LinearLayout
-                android:id="@+id/ll_no_offline_files"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="40dp"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <TextView
-                    android:id="@+id/no_offline_files"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/product_sans_regular"
-                    android:text="No offline files"
-                    android:textSize="18sp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:gravity="center"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:text="Go online" />
-
-                    <Switch
-                        android:id="@+id/switch_go_online"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="false"
-                        android:textColor="@color/black"
-                        android:textOff="@string/offline"
-                        android:textOn="@string/online" />
-
-
-                </LinearLayout>
-            </LinearLayout>
-
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerViewMusic"
                 android:layout_width="match_parent"
@@ -313,9 +271,36 @@
                 app:layout_constraintTop_toBottomOf="@id/tvCategoryTitle"
                 tools:listitem="@layout/item_music" />
 
-
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout
+        android:id="@+id/ll_no_offline_files"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_sad_face" />
+
+        <TextView
+            android:id="@+id/no_player_offline_files"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/product_sans_regular"
+            android:text="No offline files"
+            android:textColor="@color/white"
+            android:textSize="18sp" />
+
+    </LinearLayout>
 
     <ProgressBar
         android:id="@+id/retrieve_filenames_progress_bar"

@@ -50,6 +50,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.MusicViewHol
         Music currentMusic = musicArrayList.get(position);
 
         holder.name.setText(AppUtils.removeFileExtensionFromString(currentMusic.getFilename()));
+        holder.name.setSelected(true);
         holder.size.setText(String.format("%sMB", AppUtils.bytesToMbytes(currentMusic.getFileSize())));
         if (isAvailableOffline(currentMusic)) {
             showView(holder.offlineChecked);

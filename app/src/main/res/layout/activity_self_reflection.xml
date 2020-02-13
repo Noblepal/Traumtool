@@ -6,6 +6,19 @@
     android:layout_height="match_parent"
     tools:activity=".activities.SelfReflectionActivity">
 
+    <TextView
+        android:id="@+id/tv_skip_question"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:elevation="1dp"
+        android:fontFamily="@font/product_sans_regular"
+        android:padding="16dp"
+        android:text="skip"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <ImageButton
         android:id="@+id/imgBackSelfReflection"
         android:layout_width="wrap_content"
@@ -26,7 +39,9 @@
         android:elevation="2dp"
         android:indeterminateTint="@color/white"
         android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.flaviofaria.kenburnsview.KenBurnsView
@@ -45,6 +60,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@color/translucent_glass"
+        android:clickable="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -57,9 +73,10 @@
         android:layout_marginTop="125dp"
         android:fontFamily="@font/product_sans_regular"
         android:padding="8dp"
-        android:text="Question:"
+        android:text="Question"
         android:textColor="@color/white"
         android:textSize="32sp"
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

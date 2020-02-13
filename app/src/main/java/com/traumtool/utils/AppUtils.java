@@ -43,6 +43,12 @@ public class AppUtils {
             v.setVisibility(View.GONE);
     }
 
+    public static void tempHideView(View v) {
+        if (v.getVisibility() == View.VISIBLE)
+            v.setVisibility(View.INVISIBLE);
+    }
+
+
     public static double bytesToMbytes(long l) {
         return roundUp2DecimalPlaces((long) (l / 1024.0 / 1024.0));
     }

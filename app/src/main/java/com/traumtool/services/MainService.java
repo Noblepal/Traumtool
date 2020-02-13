@@ -112,7 +112,7 @@ public class MainService extends Service {
         return START_STICKY;
     }
 
-    public void showNotification() {
+    public void showNotification(String action, boolean ongoing) {
         createNotificationChannel();
 
         //start PlayerActivity on by Tapping notification
@@ -136,12 +136,12 @@ public class MainService extends Service {
         //set priority
         builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
         //dismiss on tap
-        builder.setAutoCancel(false);
-        builder.setOngoing(true);
+        builder.setAutoCancel(true);
+        builder.setOngoing(ongoing);
         //start intent on notification tap (MainActivity)
         builder.setContentIntent(playPausePendingIntent);
 
-        updateNotification();
+        updateNotification(action);
     }
 
     private String getCurrentAudioName() {
@@ -152,13 +152,13 @@ public class MainService extends Service {
 
     }
 
-    private void updateNotification() {
+    private void updateNotification(String action) {
         //add action buttons to notification
         //icons will not displayed on Android 7 and above
         if (audioPlayer.isPlaying())
-            builder.addAction(R.drawable.ic_pause, "Pause", playPausePendingIntent);
+            builder.addAction(R.drawable.ic_pause, action, playPausePendingIntent);
         else
-            builder.addAction(R.drawable.ic_play, "Play", playPausePendingIntent);
+            builder.addAction(R.drawable.ic_play, action, playPausePendingIntent);
 
         //builder.addAction(R.drawable.ic_skip_next_, "Next", nextPendingIntent);
 
@@ -239,12 +239,11 @@ public class MainService extends Service {
             });
             audioPlayer.setOnPreparedListener(mp -> {
                 startAudio();
-                showNotification();
                 isAudioPlaying = true;
             });
             //TODO: Change to already implemented setOnCompletionListener in this activity
             audioPlayer.setOnCompletionListener(mp -> {
-                //stopAudio();
+                stopAudio();
             });
             //TODO: Also remove this - not used at all
             audioPlayer.setOnInfoListener((mp, what, extra) -> false);
@@ -310,6 +309,8 @@ public class MainService extends Service {
             audioPlayer.start();
             isAudioPlaying = true;
             SharedPrefsManager.getInstance(context).setIsBackgroundAudioPlaying(true);
+            clearNotification();
+            showNotification("Pause", true);
         }
     }
 
@@ -319,6 +320,8 @@ public class MainService extends Service {
             isAudioPlaying = false;
             length = audioPlayer.getCurrentPosition();
             audioPlayer.pause();
+            clearNotification();
+            showNotification("Play", false);
         }
     }
 
@@ -326,6 +329,8 @@ public class MainService extends Service {
         if (audioPlayer != null) {
             isAudioPlaying = false;
             audioPlayer.start();
+            clearNotification();
+            showNotification("Pause", true);
         }
     }
 
@@ -345,11 +350,16 @@ public class MainService extends Service {
         }
     }
 
-    private void clearNotification() {
+    private void pauseNotification() {
         NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
-        notificationManagerCompat.cancel(NOTIFICATION_ID);
 
+        notificationManagerCompat.cancel(NOTIFICATION_ID);
+    }
+
+    private void clearNotification() {
         try {
+            NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(context);
+            notificationManagerCompat.cancelAll();
             manager.cancelAll();
         } catch (Exception e) {
             Log.i(TAG, "clearNotification: Notification not running");
@@ -399,16 +409,18 @@ public class MainService extends Service {
                     } else {
                         broadCastIntent.putExtra("progress", getAudioProgress());
                     }
-                    if (audioPlayer.isPlaying())
+                    if (audioPlayer.isPlaying()) {
                         broadCastIntent.putExtra("isPlaying", true);
-                    else
+                        logThis(TAG, 0, "isPlaying = true");
+                    } else {
                         broadCastIntent.putExtra("isPlaying", false);
-
+                        logThis(TAG, 0, "isPlaying = false");
+                    }
                     broadCastIntent.putExtra("dur", getTotalAudioDuration());
+                    broadCastIntent.putExtra("current_position", getCurrentAudioPosition());
 
-                    if (audioPlayer.isPlaying())
-                        sendPositionBroadcast(broadCastIntent);
-
+                    //if (audioPlayer.isPlaying())
+                    sendPositionBroadcast(broadCastIntent);
 
                     Log.i(TAG, "run: new position:: " + audioPlayer.getCurrentPosition());
                     SharedPrefsManager.getInstance(context).setCurrentPosition(audioPlayer.getCurrentPosition());

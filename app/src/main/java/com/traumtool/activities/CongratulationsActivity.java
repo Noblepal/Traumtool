@@ -25,7 +25,8 @@ public class CongratulationsActivity extends AppCompatActivity {
         KenBurnsView backGround = findViewById(R.id.imageViewKB);
 
         findViewById(R.id.rootView).setOnTouchListener((v, event) -> {
-            startActivity(new Intent(CongratulationsActivity.this, CategoryActivity.class));
+            //startActivity(new Intent(CongratulationsActivity.this, CategoryActivity.class));
+            finish();
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
             return true;
         });
@@ -38,14 +39,16 @@ public class CongratulationsActivity extends AppCompatActivity {
                 .into(backGround);
 
         findViewById(R.id.imgBackCongratulations).setOnClickListener(v -> {
-            startActivity(new Intent(CongratulationsActivity.this, CategoryActivity.class));
+            //startActivity(new Intent(CongratulationsActivity.this, CategoryActivity.class));
+            finish();
             overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         });
     }
 
     @Override
     public void onBackPressed() {
-        startActivity(new Intent(CongratulationsActivity.this, CategoryActivity.class));
+        //startActivity(new Intent(CongratulationsActivity.this, CategoryActivity.class));
+        finish();
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 }

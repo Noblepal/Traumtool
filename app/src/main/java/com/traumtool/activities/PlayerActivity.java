@@ -72,6 +72,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     ImageView topImage;
     Switch goOnlineSwitch;
     LinearLayout noOfflineFiles;
+    TextView tvErrorMessage;
     private SeekBar seekBar;
     private TextView realTime, audioName, mainCategory;
     private ProgressBar bufferProgressBar, downloadProgress, loadingProgressBar;
@@ -81,6 +82,10 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     private Music currentAudio;
     private int mediaFileLength = 0;
     private int realTimeLength = 0;
+    private int decrementCounter = 0;
+    private int finalDestination = 0;
+    private int primaryProgress = 0;
+    private int secondaryProgress = 0;
     private String category;
     private DownloadManager mgr = null;
     private long lastDownload = -1L;
@@ -88,8 +93,6 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     private static final int PERMISSION_REQUEST = 100;
     final Handler handler = new Handler();
     private boolean isFirstTimeLaunch = true;
-    int decrementCounter = 0;
-    int finalDestination = 0;
 
     //For notifications
     private static final String CHANNEL_ID = "channel_id01";
@@ -166,34 +169,41 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
             isPlayerPlaying = intent.getBooleanExtra("isPlaying", false);
-            int primaryProgress = intent.getIntExtra("progress", 0);
-            int secondaryProgress = intent.getIntExtra("sec_progress", 0);
+            primaryProgress = intent.getIntExtra("progress", 0);
+            secondaryProgress = intent.getIntExtra("sec_progress", 0);
+            realTimeLength = intent.getIntExtra("current_position", 0);
             resetLengthsFirst();
             mediaFileLength = intent.getIntExtra("dur", 0);
-            realTimeLength = mediaFileLength - (decrementCounter += 1000);
-            realTime.setText(formatStringToTime(mediaFileLength));
-            //  ... react to local broadcast message
-
-
-            if (primaryProgress == 100) {
-                logThis(TAG, 0, "temp: " + finalDestination);
-                logThis(TAG, 0, "final: " + primaryProgress);
-                play_pause.setChecked(true);
+            if (isPlayerPlaying) {
+                setPlayButtonToPause();
+                logThis(TAG, 0, "isPlayerPlaying " + isPlayerPlaying);
+                decrementCounter = mediaFileLength - realTimeLength;
+                logThis(TAG, 0, "mediaFileLength: " + mediaFileLength);
+                logThis(TAG, 0, "realtimeLength: " + realTimeLength);
+                logThis(TAG, 0, "countDownLength: " + decrementCounter);
+                logThis(TAG, 0, "primaryProgress: " + primaryProgress);
+                realTime.setText(formatStringToTime(decrementCounter));
+            } else {
+                setPlayButtonToPlay();
+                logThis(TAG, 0, "Setting play button to play icon: " + isPlayerPlaying);
             }
-
+            if (decrementCounter == 0) {
+                setPlayButtonToPlay();
+            }
             seekBar.setProgress(primaryProgress);
-            logThis(TAG, 3, "primaryProgress: " + primaryProgress);
             seekBar.setSecondaryProgress(secondaryProgress);
-            logThis(TAG, 2, "secondaryProgress: " + secondaryProgress);
         }
     };
 
     private void resetLengthsFirst() {
         if (isFirstTimeLaunch) {
+            enablePlayButton();
+            setPlayButtonToPause();
             realTimeLength = 0;
             mediaFileLength = 0;
+            seekBar.setProgress(0);
+            seekBar.setSecondaryProgress(0);
             isFirstTimeLaunch = false;
         }
     }
@@ -213,19 +223,14 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         //mainCategory.setText(AppUtils.capitalizeEachWord(category));
         backButton = findViewById(R.id.imgBackPlayer);
         noOfflineFiles = findViewById(R.id.ll_no_offline_files);
-        goOnlineSwitch = findViewById(R.id.switch_go_online);
-        goOnlineSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-//                hideView(noOfflineFiles);
-//                retrieveAudioFiles();
-//                SharedPrefsManager.getInstance(PlayerActivity.this).toggleOfflineMode(true);
-            }
-        });
+        tvErrorMessage = findViewById(R.id.no_player_offline_files);
+
         backButton.setOnClickListener(v -> onBackPressed());
 
         play_pause.setOnClickListener(this);
 
         audioName = findViewById(R.id.tvAudioName);
+        audioName.setSelected(true);
 
         seekBar = findViewById(R.id.seek_bar);
         seekBar.setMax(99);//100% (0 - 99)
@@ -247,6 +252,9 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     //Download audio list from server
     private void retrieveAudioFiles() {
         showView(loadingProgressBar);
+        hideView(noOfflineFiles);
+        disablePlayButton();
+        setPlayButtonToPlay();
         ApiService service = AppUtils.getApiService();
         service.getFileList(category)
                 .enqueue(new Callback<FileResponse>() {
@@ -254,6 +262,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                     public void onResponse(Call<FileResponse> call, Response<FileResponse> response) {
                         Toast.makeText(PlayerActivity.this, "Complete", Toast.LENGTH_SHORT).show();
                         hideView(loadingProgressBar);
+                        hideView(noOfflineFiles);
                         if (response.isSuccessful()) {
                             try {
                                 List<Music> audios = response.body().getAudio();
@@ -267,6 +276,11 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                             loadFirstAudioFile(musicArrayList);
                             //loadFileIntoPlayer(musicArrayList.get(0));//Load first audio file into player
                         } else {
+                            tvErrorMessage.setText("No internet connection");
+
+                            disablePlayButton();
+
+                            showView(noOfflineFiles);
                             showCustomSnackBar("Failed to get data. Possibly due to network error", true, "Retry", -2);
                         }
                     }
@@ -274,6 +288,9 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                     @Override
                     public void onFailure(Call<FileResponse> call, Throwable t) {
                         hideView(loadingProgressBar);
+                        tvErrorMessage.setText("No internet connection");
+                        showView(noOfflineFiles);
+                        disablePlayButton();
                         showCustomSnackBar("Failed to get data. Possibly due to network error", true, "Retry", -2);
                         Log.d(TAG, "onFailure: " + t.getMessage());
                     }
@@ -309,20 +326,17 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
             }
         }
         if (files.length > 0) {
-
+            hideView(noOfflineFiles);
             populateRecyclerView(offlineFiles);
         } else {
-            //Toast.makeText(this, "No offline files", Toast.LENGTH_LONG).show();
+            showView(noOfflineFiles);
+
             showCustomSnackBar("No offline files", false, null, -2);
+            disablePlayButton();
         }
     }
 
     private void populateRecyclerView(ArrayList<Music> musics) {
-        if (isOfflineFromPrefs && musics.size() == 0) {
-//            showView(noOfflineFiles);
-        } else {
-            hideView(noOfflineFiles);
-        }
         musicAdapter = new MusicAdapter(this, musics);
         Log.d(TAG, "populateRecyclerView: Size: " + musics.size());
         recyclerView = findViewById(R.id.recyclerViewMusic);
@@ -375,7 +389,8 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
 
     //Use AudioService to play selected audio from recyclerView
     private void playSelectedAudio(Music audio) {
-        play_pause.setChecked(false);
+        enablePlayButton();
+        setPlayButtonToPause();
         audioName.setText(AppUtils.removeFileExtensionFromString(audio.getFilename()));
 
         Intent intent = new Intent(PlayerActivity.this, MainService.class);
@@ -419,7 +434,22 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         } catch (Exception e) {
             Log.i(TAG, "enableDownloadButton: Already enabled");
         }
+    }
 
+    private void disablePlayButton() {
+        play_pause.setEnabled(false);
+    }
+
+    private void enablePlayButton() {
+        play_pause.setEnabled(true);
+    }
+
+    private void setPlayButtonToPlay() {
+        play_pause.setChecked(true);
+    }
+
+    private void setPlayButtonToPause() {
+        play_pause.setChecked(false);
     }
 
     private void showView(View v) {

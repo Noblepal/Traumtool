@@ -47,13 +47,14 @@ import retrofit2.Response;
 import static com.traumtool.utils.AppUtils.RANDOM_PIC_URL;
 import static com.traumtool.utils.AppUtils.hideView;
 import static com.traumtool.utils.AppUtils.showView;
+import static com.traumtool.utils.AppUtils.tempHideView;
 
 public class SelfReflectionActivity extends AppCompatActivity {
 
     private ArrayList<Question> questionArrayList = new ArrayList<>();
     private ArrayList<Question> offlineFiles = new ArrayList<>();
     private static final String TAG = "SelfReflectionActivity";
-    TextView tvQuestion;
+    TextView tvQuestion, skipQuestion, titleQuestion;
     RelativeLayout buttonNextQuestion;
     ImageButton backButton;
     ProgressBar downloadTextFileProgress;
@@ -78,6 +79,9 @@ public class SelfReflectionActivity extends AppCompatActivity {
         backGround = findViewById(R.id.imageViewReflection);
         backButton = findViewById(R.id.imgBackSelfReflection);
         backButton.setOnClickListener(v -> onBackPressed());
+        titleQuestion = findViewById(R.id.textViewQuestionTitle);
+        skipQuestion = findViewById(R.id.tv_skip_question);
+        skipQuestion.setOnClickListener(v -> displayNextQuestion(getNextFile()));
 
         Glide.with(this).load(RANDOM_PIC_URL)
                 .fallback(R.drawable.relaxation)
@@ -107,7 +111,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
 
                 } else {
                     showCongratulationsMessage();
-                    new Handler().postDelayed(() -> displayNextQuestion(getNextFile()), 1000);
+                    //new Handler().postDelayed(() -> displayNextQuestion(getNextFile()), 1000);
                 }
             }
         });
@@ -119,6 +123,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
      */
     private void displayNextQuestion(File question) {
         showView(downloadTextFileProgress);
+        tempHideView(titleQuestion);
         if (question == null) {
             tvQuestion.setText("");
             return;
@@ -140,6 +145,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
         Log.d(TAG, "displayNextQuestion: " + text.toString());
         tvQuestion.setText(text.toString());
         hideView(downloadTextFileProgress);
+        showView(titleQuestion);
     }
 
     private void getFiles() {
@@ -227,6 +233,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
 
     private void showCongratulationsMessage() {
         startActivity(new Intent(SelfReflectionActivity.this, CongratulationsActivity.class));
+        finish();
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
     }
 
@@ -331,7 +338,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
     }
 
     private boolean writeResponseBodyToDisk(ResponseBody body, String aa) {
-        showView(downloadTextFileProgress);
+
         try {
             File path = SelfReflectionActivity.this.getExternalFilesDir("Download/" + category + "/");
 
@@ -368,12 +375,12 @@ public class SelfReflectionActivity extends AppCompatActivity {
                 }
 
                 outputStream.flush();
-                hideView(downloadTextFileProgress);
+
                 return true;
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.d(TAG, "writeResponseBodyToDisk: 190 " + e.getLocalizedMessage());
-                hideView(downloadTextFileProgress);
+
                 return false;
             } finally {
                 if (inputStream != null) {
@@ -387,7 +394,7 @@ public class SelfReflectionActivity extends AppCompatActivity {
         } catch (IOException e) {
             Log.d(TAG, "writeResponseBodyToDisk: 248 " + e.getLocalizedMessage());
             e.printStackTrace();
-            hideView(downloadTextFileProgress);
+
             return false;
         }
     }

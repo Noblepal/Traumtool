@@ -5,7 +5,9 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -46,6 +48,8 @@ public class DreamActivity extends AppCompatActivity {
     private boolean isOfflineFromPrefs;
     private String category;
     private ImageButton backButton;
+    private LinearLayout llNoOfflineFiles;
+    private TextView tvErrorMessage;
     private ImageView topImage;
     private RecyclerView recyclerView;
     private String pdfText = "";
@@ -71,9 +75,12 @@ public class DreamActivity extends AppCompatActivity {
         handler.postDelayed(() -> {
             if (isOfflineFromPrefs) {
                 if (getFiles()) {
+                    hideView(llNoOfflineFiles);
                     populateRecyclerView(offlineDreams);
                 } else {
                     showCustomSnackBar("No offline files found", false, null, -2);
+                    tvErrorMessage.setText("No offline files");
+                    showView(llNoOfflineFiles);
                     hideView(progressBar);
                 }
             } else {
@@ -85,6 +92,7 @@ public class DreamActivity extends AppCompatActivity {
 
     private void retrieveBooks() {
         showView(progressBar);
+        hideView(llNoOfflineFiles);
         ApiService service = AppUtils.getApiService();
         service.getDreamFileList(category).enqueue(new Callback<DreamFileResponse>() {
             @Override
@@ -93,6 +101,7 @@ public class DreamActivity extends AppCompatActivity {
                     hideView(progressBar);
                     Toast.makeText(DreamActivity.this, "Error: " + response.body().getMessage(), Toast.LENGTH_SHORT).show();
                 }
+                hideView(llNoOfflineFiles);
                 Toast.makeText(DreamActivity.this, response.body().getMessage(), Toast.LENGTH_SHORT).show();
                 try {
                     getFiles();
@@ -107,6 +116,8 @@ public class DreamActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<DreamFileResponse> call, Throwable t) {
                 hideView(progressBar);
+                tvErrorMessage.setText("No internet connection");
+                showView(llNoOfflineFiles);
                 showCustomSnackBar("Failed to get data. Possibly due to network error", true, "Retry", -2);
             }
         });
@@ -210,6 +221,8 @@ public class DreamActivity extends AppCompatActivity {
     }
 
     private void initializeStuff() {
+        llNoOfflineFiles = findViewById(R.id.ll_dreams_no_offline_files);
+        tvErrorMessage = findViewById(R.id.no_dream_offline_files);
         progressBar = findViewById(R.id.dream_progress_bar);
         recyclerView = findViewById(R.id.recyclerViewDream);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
