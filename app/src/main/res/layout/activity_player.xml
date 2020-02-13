@@ -82,10 +82,9 @@
         android:id="@+id/materialCardView"
         android:layout_width="match_parent"
         android:layout_height="128dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginRight="16dp"
+        android:layout_margin="8dp"
         app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
         app:cardPreventCornerOverlap="false"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -250,12 +249,15 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/recyclerview_bg"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvCategoryTitle">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="@drawable/recyclerview_bg"
             android:descendantFocusability="blocksDescendants"
             android:orientation="vertical">
 
@@ -263,12 +265,18 @@
                 android:id="@+id/recyclerViewMusic"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="16dp"
+                android:background="@drawable/recyclerview_bg"
+                android:fadingEdge="horizontal"
+                android:fadingEdgeLength="30dp"
+                android:fillViewport="false"
                 android:layoutAnimation="@anim/layout_animation"
+                android:overScrollMode="always"
+                android:requiresFadingEdge="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tvCategoryTitle"
+                tools:itemCount="4"
                 tools:listitem="@layout/item_music" />
 
         </LinearLayout>

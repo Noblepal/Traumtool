@@ -21,6 +21,7 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.traumtool.R;
+import com.traumtool.activities.PlayerActivity;
 import com.traumtool.utils.SharedPrefsManager;
 
 import java.io.IOException;
@@ -44,7 +45,7 @@ public class MainService extends Service {
     private Handler audioProgressUpdateHandler;
     private Handler secondaryAudioProgressUpdateHandler;
 
-    PendingIntent nextPendingIntent, playPausePendingIntent;
+    PendingIntent playerPendingIntent, playPausePendingIntent;
 
     public static final int notify = 1000;  //interval between two services(Here Service run every 5 seconds)
     int count = 0;  //number of times service is display
@@ -120,10 +121,9 @@ public class MainService extends Service {
         playPauseIntent.putExtra("play_pause", "play_pause");
         playPausePendingIntent = PendingIntent.getService(context, 0, playPauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-       /* //Click Play/Pause button to start pause/play audio
-        Intent nextIntent = new Intent(context, PlayerActivity.class);
-        nextIntent.putExtra("play_pause", "play_pause");
-        nextPendingIntent = PendingIntent.getService(context, 0, nextIntent, PendingIntent.FLAG_ONE_SHOT);*/
+        Intent playerIntent = new Intent(context, PlayerActivity.class);
+        playerIntent.putExtra("category", SharedPrefsManager.getInstance(context).getCurrentCategory());
+        playerPendingIntent = PendingIntent.getActivity(context, 0, playerIntent, 0);
 
         //creating notification
         builder = new NotificationCompat.Builder(context, CHANNEL_ID);
@@ -134,12 +134,12 @@ public class MainService extends Service {
         //description
         builder.setContentText("Playing in the background");
         //set priority
-        builder.setPriority(NotificationCompat.PRIORITY_DEFAULT);
+        builder.setPriority(NotificationCompat.PRIORITY_HIGH);
         //dismiss on tap
         builder.setAutoCancel(true);
         builder.setOngoing(ongoing);
         //start intent on notification tap (MainActivity)
-        builder.setContentIntent(playPausePendingIntent);
+        builder.setContentIntent(playerPendingIntent);
 
         updateNotification(action);
     }
@@ -511,6 +511,7 @@ public class MainService extends Service {
         mTimer.cancel();
         stopForeground(true);
         manager.cancelAll();
+        clearNotification();
         destroyAudioPlayer();
 
         /*Delete variables from local storage*/
