@@ -6,24 +6,23 @@ import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.snackbar.Snackbar;
 import com.traumtool.R;
 import com.traumtool.utils.SharedPrefsManager;
 
 public class CategoryActivity extends AppCompatActivity implements View.OnClickListener {
 
-    Switch mSwitch;
+    //Switch mSwitch;
+    ToggleButton btnModeSwitch;
     ImageButton imgBack;
-    String TAG = "Category activity";
-    MaterialCardView cv_relaxation, cv_dreamtrips, cv_meditation, cv_selfreflection, cv_musclerelaxation;
-    TextView tvImprint;
+    String TAG = "CategoryActivity";
+    MaterialCardView cv_relaxation, cv_dreamtrips, cv_meditation, cv_selfreflection, cv_musclerelaxation, cv_mode;
+    TextView tvImprint, tvMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,50 +32,52 @@ public class CategoryActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void initializeData() {
-
         cv_relaxation = findViewById(R.id.cvCategoryRelaxation);
         cv_dreamtrips = findViewById(R.id.cvCategoryDreamTrips);
         cv_meditation = findViewById(R.id.cvCategoryMeditation);
         cv_selfreflection = findViewById(R.id.cvCategorySelfReflection);
         cv_musclerelaxation = findViewById(R.id.cvCategoryMuscleRelaxation);
+        cv_mode = findViewById(R.id.mcvMode);
         tvImprint = findViewById(R.id.tvLink);
+        tvMode = findViewById(R.id.tvCategoryOnlineOffline);
 
         cv_relaxation.setOnClickListener(this);
         cv_dreamtrips.setOnClickListener(this);
         cv_meditation.setOnClickListener(this);
         cv_selfreflection.setOnClickListener(this);
         cv_musclerelaxation.setOnClickListener(this);
+        cv_mode.setOnClickListener(this);
 
-        //Set switch to previously selected mode
-        mSwitch = findViewById(R.id.switch_online_offline);
+        btnModeSwitch = findViewById(R.id.btnToggleOnlineOffline);
         imgBack = findViewById(R.id.imgBackCategory);
-        mSwitch.setChecked(true);
-        if (SharedPrefsManager.getInstance(this).getIsOffline()) {
-            mSwitch.setChecked(false);
-        }
 
         tvImprint.setMovementMethod(LinkMovementMethod.getInstance());
 
-        mSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+        btnModeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             Log.d(TAG, "onCheckedChanged: " + isChecked);
             if (isChecked) {
                 SharedPrefsManager.getInstance(CategoryActivity.this).toggleOfflineMode(false);
-                showCustomSnackBar("Online mode set", false, null, 0);
+                setIsOnline();
+
             } else {
                 SharedPrefsManager.getInstance(CategoryActivity.this).toggleOfflineMode(true);
-                showCustomSnackBar("Offline mode set", false, null, 0);
+                setIsOffline();
             }
         });
         imgBack.setOnClickListener(v -> onBackPressed());
 
     }
 
-    private void showCustomSnackBar(String message, boolean hasAction, @Nullable String actionText, int LENGTH) {
-        Snackbar snackbar = Snackbar.make(mSwitch, message, LENGTH);
-        if (hasAction) {
-            Log.d(TAG, "showCustomSnackBar: Has Action");
-        }
-        snackbar.show();
+    private void setIsOnline() {
+        btnModeSwitch.setChecked(true);
+        tvMode.setText(R.string.online);
+        tvMode.setTextColor(getResources().getColor(R.color.colorAccentLight));
+    }
+
+    private void setIsOffline() {
+        btnModeSwitch.setChecked(false);
+        tvMode.setText(R.string.offline);
+        tvMode.setTextColor(getResources().getColor(R.color.greyMedium));
     }
 
     @Override
@@ -95,7 +96,9 @@ public class CategoryActivity extends AppCompatActivity implements View.OnClickL
     protected void onResume() {
         super.onResume();
         if (SharedPrefsManager.getInstance(this).getIsOffline()) {
-            mSwitch.setChecked(false);
+            setIsOffline();
+        } else {
+            setIsOnline();
         }
     }
 
@@ -137,7 +140,9 @@ public class CategoryActivity extends AppCompatActivity implements View.OnClickL
                 startActivity(intent);
                 overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
                 break;
-
+            case R.id.mcvMode:
+                btnModeSwitch.setChecked(!btnModeSwitch.isChecked());
+                break;
         }
     }
 }

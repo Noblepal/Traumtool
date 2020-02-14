@@ -11,6 +11,7 @@
         android:id="@+id/categoryToolBar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
+        app:contentInsetStart="0dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -19,13 +20,26 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <TextView
+                android:id="@+id/tvLink"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="8dp"
+                android:fontFamily="@font/product_sans_bold"
+                android:gravity="center"
+                android:text="@string/link"
+                android:textColor="@color/colorAccent"
+                android:textSize="22sp" />
+
             <ImageButton
                 android:id="@+id/imgBackCategory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginEnd="16dp"
-                android:layout_marginRight="16dp"
                 android:background="@color/transparent"
                 android:src="@drawable/ic_arrow_back"
                 android:tint="@color/black" />
@@ -42,7 +56,7 @@
                 android:transitionName="logo" />
 
 
-            <TextView
+            <!--<TextView
                 android:id="@+id/tv_mode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -62,7 +76,7 @@
                 android:layout_centerVertical="true"
                 android:textColor="@color/black"
                 android:textOff="@string/offline"
-                android:textOn="@string/online" />
+                android:textOn="@string/online" />-->
 
         </RelativeLayout>
 
@@ -184,7 +198,7 @@
             android:transitionGroup="true"
             app:cardCornerRadius="12dp"
             app:cardPreventCornerOverlap="false"
-            app:layout_constraintBottom_toTopOf="@id/imprint"
+            app:layout_constraintBottom_toTopOf="@id/mcvMode"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/cvCategoryMeditation"
             app:layout_constraintTop_toBottomOf="@id/cvCategoryDreamTrips">
@@ -219,7 +233,7 @@
             app:cardCornerRadius="12dp"
             app:cardPreventCornerOverlap="false"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/imprint"
+            app:layout_constraintEnd_toStartOf="@id/mcvMode"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/cvCategoryMeditation">
 
@@ -245,7 +259,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/imprint"
+            android:id="@+id/mcvMode"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_margin="8dp"
@@ -258,20 +272,29 @@
             app:layout_constraintStart_toEndOf="@id/cvCategoryMuscleRelaxation"
             app:layout_constraintTop_toBottomOf="@id/cvCategorySelfReflection">
 
+            <ToggleButton
+                android:id="@+id/btnToggleOnlineOffline"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_gravity="center"
+                android:background="@drawable/network_mode_selector"
+                android:clickable="false"
+                android:scaleType="fitCenter"
+                android:text=""
+                android:textOff=""
+                android:textOn="" />
+
             <TextView
-                android:id="@+id/tvLink"
+                android:id="@+id/tvCategoryOnlineOffline"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom|end"
-                android:layout_margin="16dp"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginBottom="8dp"
                 android:fontFamily="@font/product_sans_bold"
-                android:text="@string/link"
-                android:textColor="@color/colorAccent"
-                android:textSize="22sp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-
+                android:padding="2dp"
+                android:text="Offline"
+                android:textColor="@color/greyMedium"
+                android:textSize="24sp" />
         </com.google.android.material.card.MaterialCardView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

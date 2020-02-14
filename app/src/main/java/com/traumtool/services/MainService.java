@@ -128,7 +128,7 @@ public class MainService extends Service {
         //creating notification
         builder = new NotificationCompat.Builder(context, CHANNEL_ID);
         //icon
-        builder.setSmallIcon(R.mipmap.ic_launcher_round);
+        builder.setSmallIcon(R.mipmap.ic_launcher);
         //title
         builder.setContentTitle("Traumtool");
         //description

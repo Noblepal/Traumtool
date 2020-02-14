@@ -3,6 +3,7 @@
     <color name="colorPrimary">#000000</color>
     <color name="colorPrimaryDark">#000000</color>
     <color name="colorAccent">#0973ba</color>
+    <color name="colorAccentLight">#9dbceb</color>
 
 
     <color name="translucent_glass">#95363636</color>
@@ -11,6 +12,7 @@
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="grey">#ECECEC</color>
+    <color name="greyMedium">#d9d9d9</color>
     <color name="greyDark">#C0C0C0</color>
 
 </resources>
