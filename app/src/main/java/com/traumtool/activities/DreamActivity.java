@@ -24,6 +24,7 @@ import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import com.traumtool.R;
 import com.traumtool.adapters.DreamAdapter;
 import com.traumtool.interfaces.ApiService;
+import com.traumtool.models.AuthorResponse;
 import com.traumtool.models.Dream;
 import com.traumtool.models.DreamFileResponse;
 import com.traumtool.utils.AppUtils;
@@ -44,6 +45,7 @@ public class DreamActivity extends AppCompatActivity {
     private ArrayList<Dream> dreamArrayList = new ArrayList<>();
     private ArrayList<Dream> offlineDreams = new ArrayList<>();
     private ArrayList<Dream> hybridList = new ArrayList<>();
+    private DreamAdapter dreamAdapter;
     private static final String TAG = "DreamActivity";
     private boolean isOfflineFromPrefs;
     private String category;
@@ -58,6 +60,7 @@ public class DreamActivity extends AppCompatActivity {
     String[] firstLine;
     String title_and_author;
     String author;
+    ApiService service;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,8 +109,8 @@ public class DreamActivity extends AppCompatActivity {
                 try {
                     getFiles();
                     dreamArrayList.addAll(response.body().getDreams());
-
                     checkIfFilesExist();
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -123,6 +126,32 @@ public class DreamActivity extends AppCompatActivity {
         });
     }
 
+    private void getAuthorNamesFromURL(ArrayList<Dream> arrayList) {
+        for (Dream d : arrayList) {
+            getAuthorNameFromURL(d);
+        }
+    }
+
+    private void getAuthorNameFromURL(Dream dream) {
+        service.getThisAuthor(dream.getFileName()).enqueue(new Callback<AuthorResponse>() {
+            @Override
+            public void onResponse(Call<AuthorResponse> call, Response<AuthorResponse> response) {
+                if (!response.body().getAuthor().trim().equals("")) {
+                    dream.setAuthor(response.body().getAuthor().trim());
+                    hybridList.remove(dream);
+                    hybridList.add(dream);
+                    Log.d(TAG, "onResponse: dream: " + dream);
+                    dreamAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<AuthorResponse> call, Throwable t) {
+                Log.i(TAG, "onFailure: Failed to get author(s). Reason: " + t.getLocalizedMessage());
+            }
+        });
+    }
+
     private void showCustomSnackBar(String message, boolean hasAction,
                                     @Nullable String actionText, int LENGTH) {
         Snackbar snackbar = Snackbar.make(progressBar, message, LENGTH);
@@ -133,9 +162,7 @@ public class DreamActivity extends AppCompatActivity {
     }
 
     private void checkIfFilesExist() {
-        Handler handler = new Handler();
-
-        handler.post(() -> {
+        new Handler().post(() -> {
             for (int t = 0; t < dreamArrayList.size(); t++) {
                 for (int f = 0; f < offlineDreams.size(); f++) {
                     if (dreamArrayList.get(t).getFileName().equals(offlineDreams.get(f).getFileName())) {
@@ -152,7 +179,10 @@ public class DreamActivity extends AppCompatActivity {
                     hybridList.add(dreamArrayList.get(t));
                 }
             }
-            runOnUiThread(() -> populateRecyclerView(hybridList));
+            runOnUiThread(() -> {
+                populateRecyclerView(hybridList);
+                getAuthorNamesFromURL(hybridList);
+            });
         });
 
     }
@@ -221,6 +251,8 @@ public class DreamActivity extends AppCompatActivity {
     }
 
     private void initializeStuff() {
+        service = AppUtils.getApiService();
+        dreamAdapter = new DreamAdapter(this, hybridList);
         llNoOfflineFiles = findViewById(R.id.ll_dreams_no_offline_files);
         tvErrorMessage = findViewById(R.id.no_dream_offline_files);
         progressBar = findViewById(R.id.dream_progress_bar);
@@ -242,7 +274,8 @@ public class DreamActivity extends AppCompatActivity {
 
     private void populateRecyclerView(ArrayList<Dream> dreams) {
         hideView(progressBar);
-        recyclerView.setAdapter(new DreamAdapter(this, dreams));
+        recyclerView.setAdapter(dreamAdapter);
+        dreamAdapter.notifyDataSetChanged();
     }
 
     @Override

@@ -48,7 +48,7 @@ public class DreamAdapter extends RecyclerView.Adapter<DreamAdapter.MusicViewHol
 
         currentDream.setFileUrl(AppUtils.BASE_URL + currentDream.getCategory() + "/" + currentDream.getFileName());
 
-        holder.title.setText(currentDream.getFileName());
+        holder.title.setText(AppUtils.removeFileExtensionFromString(currentDream.getFileName()));
         holder.title.setSelected(true);
         String author = currentDream.getAuthor() != null ? "by " + currentDream.getAuthor() : "Unknown author";
         holder.author.setText(author);

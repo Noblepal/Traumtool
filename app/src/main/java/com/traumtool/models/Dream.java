@@ -1,5 +1,7 @@
 package com.traumtool.models;
 
+import androidx.annotation.NonNull;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -75,5 +77,11 @@ public class Dream implements Serializable {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return this.filename + " author: " + this.author;
     }
 }
