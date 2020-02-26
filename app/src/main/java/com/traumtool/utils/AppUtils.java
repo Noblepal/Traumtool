@@ -5,6 +5,7 @@ import android.view.View;
 
 import com.traumtool.interfaces.ApiService;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Locale.US;
@@ -12,6 +13,7 @@ import static java.util.Locale.US;
 public class AppUtils {
     public static final String BASE_URL = "http://traumtool.bplaced.net/";
     public static final String RANDOM_PIC_URL = "https://source.unsplash.com/random/?nature,water";
+    private static final String TAG = "AppUtils";
 
     public static ApiService getApiService() {
         return RetrofitClient.getClient(BASE_URL).create(ApiService.class);
@@ -27,9 +29,14 @@ public class AppUtils {
     }
 
     public static String removeFileExtensionFromString(String data) {
-        return !data.equals("")
-                ? data.substring(0, data.lastIndexOf("."))
-                : "";
+        if (!data.equals("")) {
+            if (!data.contains("."))
+                return data;
+            else
+                return data.substring(0, data.lastIndexOf("."));
+        } else {
+            return "";
+        }
     }
 
     public static void showView(View v) {
@@ -82,5 +89,62 @@ public class AppUtils {
                 Log.v(TAG, message);
         }
 
+    }
+
+    /*This method will split a string in two ways
+     * First: Using uppercase letters to determine where split the string
+     * e.g ThisIsMyString will be {This, Is, My, String}
+     * Second part will split using underscore '_'
+     * e.g ThisIsMyString_AnotherPart will be {This, Is, My, String}, {Another, Part}
+     */
+
+    public static String[] stringSplitter(String rawString) {
+        try { //To prevent ArrayOutPfBoundsException
+            String[] bookAndAuthor = {"", ""};
+
+            //Split using underscore
+            String[] mainArray = rawString.split("_");
+            Log.e(TAG, "stringSplitter: " + Arrays.toString(mainArray));//This action should return exactly two array items
+
+            String bookName = mainArray[0];
+            String authorName = mainArray[1];
+
+            String[] bookArray = removeFirstBlankElement(bookName.split("(?=\\p{Upper})"));
+            Log.e(TAG, "stringSplitter: " + Arrays.toString(bookArray));
+            StringBuilder bookBuilder = new StringBuilder();
+            for (String strBook : bookArray) {
+                String cap = strBook.substring(0, 1).toUpperCase() + strBook.substring(1);
+                bookBuilder.append(cap).append(" ");
+            }
+
+            String[] authorArray = removeFirstBlankElement(authorName.split("(?=\\p{Upper})"));
+            Log.e(TAG, "stringSplitter: " + Arrays.toString(authorArray));
+            StringBuilder authorBuilder = new StringBuilder();
+            for (String strAuthor : authorArray) {
+                String cap = strAuthor.substring(0, 1).toUpperCase() + strAuthor.substring(1);
+                authorBuilder.append(cap).append(" ");
+            }
+
+            Log.e(TAG, "stringSplitter: Book Name: " + bookBuilder.toString());
+            Log.e(TAG, "stringSplitter: Author Name: " + authorBuilder.toString());
+
+            bookAndAuthor[0] = bookBuilder.toString();
+            bookAndAuthor[1] = authorBuilder.toString();
+
+            return bookAndAuthor;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new String[]{rawString, rawString};
+        }
+    }
+
+    private static String[] removeFirstBlankElement(String[] originalArray) {
+        String[] newArray = new String[originalArray.length - 1];
+        for (int c = 0, k = 0; c < originalArray.length; c++) {
+            if (c == 0)//Remove array item at index 0
+                continue;
+            newArray[k++] = originalArray[c];
+        }
+        return newArray;
     }
 }

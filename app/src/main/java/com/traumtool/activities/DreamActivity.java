@@ -24,7 +24,6 @@ import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import com.traumtool.R;
 import com.traumtool.adapters.DreamAdapter;
 import com.traumtool.interfaces.ApiService;
-import com.traumtool.models.AuthorResponse;
 import com.traumtool.models.Dream;
 import com.traumtool.models.DreamFileResponse;
 import com.traumtool.utils.AppUtils;
@@ -101,7 +100,7 @@ public class DreamActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<DreamFileResponse> call, Response<DreamFileResponse> response) {
                 if (response.body().getError()) {
-                    hideView(progressBar);
+
                     Toast.makeText(DreamActivity.this, "Error: " + response.body().getMessage(), Toast.LENGTH_SHORT).show();
                 }
                 hideView(llNoOfflineFiles);
@@ -128,12 +127,27 @@ public class DreamActivity extends AppCompatActivity {
 
     private void getAuthorNamesFromURL(ArrayList<Dream> arrayList) {
         for (Dream d : arrayList) {
-            getAuthorNameFromURL(d);
+            extractBookAndAuthorFromFileName(d);
         }
     }
 
-    private void getAuthorNameFromURL(Dream dream) {
-        service.getThisAuthor(dream.getFileName()).enqueue(new Callback<AuthorResponse>() {
+    private void extractBookAndAuthorFromFileName(Dream dream) {
+        try { //Small delay to prevent ConcurrentModificationException (Adjust duration in case app is crashing)
+            new Handler().postDelayed(() -> {
+                String[] bookAndAuthor = AppUtils.stringSplitter(dream.getFileName());
+                dream.setFilename(bookAndAuthor[0].trim()); //get book name
+                dream.setAuthor(bookAndAuthor[1].trim()); //get author name
+                hybridList.remove(dream);
+                hybridList.add(dream);
+                dreamAdapter.notifyDataSetChanged(); //reload adapter
+                hideView(progressBar);
+            }, 700);
+        } catch (Exception e) {
+            Toast.makeText(this, "Some author names could not be identified", Toast.LENGTH_SHORT).show();
+        }
+
+
+        /*service.getThisAuthor(dream.getFileName()).enqueue(new Callback<AuthorResponse>() {
             @Override
             public void onResponse(Call<AuthorResponse> call, Response<AuthorResponse> response) {
                 if (!response.body().getAuthor().trim().equals("")) {
@@ -149,7 +163,7 @@ public class DreamActivity extends AppCompatActivity {
             public void onFailure(Call<AuthorResponse> call, Throwable t) {
                 Log.i(TAG, "onFailure: Failed to get author(s). Reason: " + t.getLocalizedMessage());
             }
-        });
+        });*/
     }
 
     private void showCustomSnackBar(String message, boolean hasAction,

@@ -96,7 +96,7 @@ public class ReadDreamActivity extends AppCompatActivity {
 
     private void downloadPDF() {
         showView(renderProgressBar);
-        String url = "data/" + dream.getCategory() + "/" + dream.getFileName();
+        String url = "data/" + dream.getCategory() + "/" + dream.getOriginalFileName();
         ApiService service = AppUtils.getApiService();
         service.downloadFile(url).
                 enqueue(new Callback<ResponseBody>() {
@@ -112,7 +112,7 @@ public class ReadDreamActivity extends AppCompatActivity {
                                     Log.d(TAG, "doInBackground: 124 " + isDownloaded);
 
                                 } else {
-                                    showCustomSnackBar("File downloaded", false, null);
+                                    showCustomSnackBar("File downloaded", false, null, 0);
                                 }
                                 return null;
                             }
@@ -123,7 +123,7 @@ public class ReadDreamActivity extends AppCompatActivity {
                                 if (isDownloaded) {
                                     //showCustomSnackBar("Download Complete", false, null);
                                 } else {
-                                    showCustomSnackBar("Something went wrong", true, "Try Again");
+                                    showCustomSnackBar("Something went wrong", true, "Try Again", -2);
                                 }
 
                                 try {
@@ -146,7 +146,7 @@ public class ReadDreamActivity extends AppCompatActivity {
 
     private void loadLocalFile() {
         File path = ReadDreamActivity.this.getExternalFilesDir("Download/" + dream.getCategory() + "/");
-        showCustomSnackBar("Viewing local file", false, null);
+        showCustomSnackBar("Viewing local file", false, null, -1);
         renderPDF(new File(path, dream.getFileName()));
     }
 
@@ -214,8 +214,8 @@ public class ReadDreamActivity extends AppCompatActivity {
         hideView(renderProgressBar);
     }
 
-    private void showCustomSnackBar(String message, boolean hasAction, @Nullable String actionText) {
-        Snackbar snackbar = Snackbar.make(imageViewPdf, message, Snackbar.LENGTH_LONG);
+    private void showCustomSnackBar(String message, boolean hasAction, @Nullable String actionText, int length) {
+        Snackbar snackbar = Snackbar.make(imageViewPdf, message, length);
         if (hasAction) {
             snackbar.setAction(actionText, v -> downloadPDF());
         }

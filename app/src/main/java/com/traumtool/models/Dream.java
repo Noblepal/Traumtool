@@ -15,6 +15,7 @@ public class Dream implements Serializable {
     @SerializedName("id")
     @Expose
     private Integer id;
+    private String originalFileName;
     @SerializedName("filename")
     @Expose
     private String filename;
@@ -28,6 +29,7 @@ public class Dream implements Serializable {
         this.fileUrl = fileUrl;
         this.id = id;
         this.filename = filename;
+        this.originalFileName = filename;
         this.category = category;
     }
 
@@ -69,6 +71,7 @@ public class Dream implements Serializable {
 
     public void setFilename(String filename) {
         this.filename = filename;
+        this.originalFileName = filename;
     }
 
     public String getCategory() {
@@ -77,6 +80,14 @@ public class Dream implements Serializable {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public String getOriginalFileName() {
+        return originalFileName;
+    }
+
+    public void setOriginalFileName(String originalFileName) {
+        this.originalFileName = originalFileName;
     }
 
     @NonNull
